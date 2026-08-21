@@ -1,0 +1,445 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة جسم الإنسان التفاعلية</title>
+<style>
+  :root{
+    --navy:#0a1128;
+    --navy2:#0f1b3d;
+    --gold:#d4af37;
+    --gold-light:#f2d675;
+    --panel:#111c3f;
+    --text:#eef1fb;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background:var(--navy);
+    color:var(--text);
+    font-family:"Tahoma","Segoe UI",sans-serif;
+    overflow-x:hidden;
+  }
+  #stars{
+    position:fixed; inset:0; z-index:0;
+  }
+  .wrap{
+    position:relative; z-index:1;
+    max-width:1100px; margin:0 auto; padding:20px 16px 60px;
+  }
+  header{
+    text-align:center; margin-bottom:20px;
+  }
+  header h1{
+    color:var(--gold-light);
+    font-size:clamp(22px,4vw,34px);
+    text-shadow:0 0 18px rgba(212,175,55,.5);
+    letter-spacing:1px;
+  }
+  header p{
+    color:#b9c2e0; margin-top:8px; font-size:14px;
+  }
+
+  .layout{
+    display:flex; gap:24px; flex-wrap:wrap;
+    align-items:flex-start; justify-content:center;
+  }
+
+  .stage{
+    background:radial-gradient(circle at 50% 20%, #14224d, #0a1128 70%);
+    border:1px solid rgba(212,175,55,.35);
+    border-radius:18px;
+    padding:16px;
+    box-shadow:0 0 30px rgba(0,0,0,.5), inset 0 0 40px rgba(212,175,55,.05);
+    flex:0 0 auto;
+  }
+
+  svg{ display:block; }
+
+  .organ{
+    cursor:pointer;
+    transition:filter .2s, opacity .2s, transform .2s;
+    transform-origin:center;
+    transform-box:fill-box;
+  }
+  .organ:hover{
+    filter:brightness(1.4) drop-shadow(0 0 8px var(--gold));
+  }
+  .organ.active{
+    filter:brightness(1.5) drop-shadow(0 0 14px var(--gold-light));
+  }
+
+  .body-outline{
+    fill:rgba(255,255,255,.03);
+    stroke:var(--gold);
+    stroke-width:2;
+    opacity:.6;
+  }
+
+  .label-badge{
+    fill:var(--gold);
+    font-size:11px;
+    display:none;
+  }
+
+  .panel{
+    flex:1 1 320px;
+    min-width:280px;
+    max-width:420px;
+    background:var(--panel);
+    border:1px solid rgba(212,175,55,.35);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 0 24px rgba(0,0,0,.4);
+    min-height:380px;
+  }
+  .panel h2{
+    color:var(--gold-light);
+    font-size:22px;
+    margin-bottom:10px;
+    border-bottom:1px solid rgba(212,175,55,.3);
+    padding-bottom:8px;
+  }
+  .panel .icon{
+    font-size:34px;
+    display:inline-block;
+    margin-left:8px;
+  }
+  .panel p{
+    color:#dfe4f5;
+    line-height:1.9;
+    margin-bottom:12px;
+    font-size:14.5px;
+  }
+  .fact{
+    background:rgba(212,175,55,.08);
+    border-right:3px solid var(--gold);
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:13.5px;
+    color:#f0e6c8;
+    margin-top:14px;
+  }
+  .placeholder{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; text-align:center; color:#8b93b8; gap:10px; padding-top:60px;
+  }
+  .placeholder .big{ font-size:48px; }
+
+  .controls{
+    margin-top:16px; display:flex; flex-direction:column; gap:10px;
+  }
+  .controls label{
+    font-size:13px; color:var(--gold-light); display:flex; justify-content:space-between;
+  }
+  input[type=range]{
+    width:100%; accent-color:var(--gold);
+  }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+    margin-top:16px;
+  }
+  .legend span{
+    background:rgba(212,175,55,.1);
+    border:1px solid rgba(212,175,55,.3);
+    padding:5px 12px; border-radius:20px; font-size:12.5px; color:var(--gold-light);
+  }
+
+  footer{
+    text-align:center; margin-top:30px; color:#6b7398; font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="wrap">
+  <header>
+    <h1>محاكاة جسم الإنسان التفاعلية</h1>
+    <p>اضغط على أي عضو في الرسم لمعرفة وظيفته ومعلومات عنه</p>
+  </header>
+
+  <div class="layout">
+    <div class="stage">
+      <svg id="bodySvg" viewBox="0 0 300 520" width="300" height="520">
+        <!-- جسم عام -->
+        <path class="body-outline" d="
+          M150,20
+          C170,20 180,35 180,55
+          C180,70 174,78 168,84
+          C190,92 210,110 214,140
+          L220,230
+          C222,250 214,260 205,262
+          L198,340
+          C198,360 200,420 195,470
+          C193,490 185,500 178,500
+          L172,430
+          L168,340
+          L160,340
+          L156,430
+          L150,500
+          C143,500 135,490 133,470
+          C128,420 130,360 130,340
+          L123,262
+          C114,260 106,250 108,230
+          L114,140
+          C118,110 138,92 160,84
+          C154,78 148,70 148,55
+          C148,35 130,20 150,20
+          Z" transform="translate(-30,0)"/>
+
+        <!-- الدماغ -->
+        <ellipse class="organ" id="brain" cx="150" cy="45" rx="20" ry="16" fill="#e8a9c9"/>
+
+        <!-- الرئتان -->
+        <path class="organ" id="lungLeft" d="M130,105 C112,110 104,140 110,168 C114,182 128,186 136,178 L138,112 Z" fill="#f28ba0"/>
+        <path class="organ" id="lungRight" d="M170,105 C188,110 196,140 190,168 C186,182 172,186 164,178 L162,112 Z" fill="#f28ba0"/>
+
+        <!-- القلب -->
+        <path class="organ" id="heart" d="M150,130 C144,120 128,120 126,136 C124,150 138,162 150,172 C162,162 176,150 174,136 C172,120 156,120 150,130 Z" fill="#d63b4a"/>
+
+        <!-- الكبد -->
+        <path class="organ" id="liver" d="M160,182 C182,180 196,192 194,208 C192,222 172,226 158,220 Z" fill="#8b3a2a"/>
+
+        <!-- المعدة -->
+        <ellipse class="organ" id="stomach" cx="132" cy="200" rx="16" ry="20" fill="#c98fc9" transform="rotate(-15 132 200)"/>
+
+        <!-- الكليتان -->
+        <ellipse class="organ" id="kidneyLeft" cx="118" cy="235" rx="9" ry="15" fill="#7a3fa0"/>
+        <ellipse class="organ" id="kidneyRight" cx="182" cy="235" rx="9" ry="15" fill="#7a3fa0"/>
+
+        <!-- الأمعاء -->
+        <path class="organ" id="intestines" d="M120,255 C110,270 115,290 130,295 C120,300 118,320 135,325 C130,335 145,345 150,335 C155,345 170,335 165,325 C182,320 180,300 170,295 C185,290 190,270 180,255 Z" fill="#d99a5b"/>
+
+        <!-- الهيكل العظمي (الساقين) -->
+        <rect class="organ" id="bones" x="140" y="345" width="8" height="150" rx="4" fill="#e8e4d8"/>
+        <rect class="organ" id="bones2" x="152" y="345" width="8" height="150" rx="4" fill="#e8e4d8" style="display:none"/>
+      </svg>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="placeholder">
+        <div class="big">🫀</div>
+        <div>اختر عضوًا من الرسم لعرض معلوماته هنا</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span>🧠 الدماغ</span>
+    <span>🫁 الرئتان</span>
+    <span>❤️ القلب</span>
+    <span>🍖 الكبد</span>
+    <span>🥞 المعدة</span>
+    <span>🫘 الكليتان</span>
+    <span>🌀 الأمعاء</span>
+    <span>🦴 العظام</span>
+  </div>
+
+  <footer>محاكاة تعليمية تفاعلية — اضغط على الأعضاء لاستكشاف الجسم البشري</footer>
+</div>
+
+<script>
+// ===== خلفية النجوم =====
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+let stars = Array.from({length:140}, () => ({
+  x: Math.random()*innerWidth,
+  y: Math.random()*innerHeight,
+  r: Math.random()*1.4+0.3,
+  s: Math.random()*0.02+0.005,
+  o: Math.random()
+}));
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#d4af37';
+  stars.forEach(st=>{
+    st.o += st.s;
+    const alpha = Math.abs(Math.sin(st.o));
+    ctx.globalAlpha = alpha*0.8+0.1;
+    ctx.beginPath();
+    ctx.arc(st.x, st.y, st.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// ===== بيانات الأعضاء =====
+const organs = {
+  brain: {
+    icon:'🧠', name:'الدماغ',
+    desc:'مركز التحكم الرئيسي في الجسم، يدير التفكير والذاكرة والمشاعر، ويستقبل ويرسل الإشارات العصبية عبر الجهاز العصبي إلى كل أعضاء الجسم.',
+    fact:'يحتوي الدماغ على نحو 86 مليار خلية عصبية، ويستهلك وحده حوالي 20% من طاقة الجسم رغم أن وزنه لا يتجاوز 2% من وزن الجسم.',
+    animated:false
+  },
+  lungLeft: {
+    icon:'🫁', name:'الرئة اليسرى',
+    desc:'عضو تنفسي يقوم بتبادل الغازات؛ يدخل الأكسجين إلى الدم ويخرج ثاني أكسيد الكربون منه. الرئة اليسرى أصغر قليلًا من اليمنى لتفسح مكانًا للقلب.',
+    fact:'يتنفس الإنسان في المتوسط أكثر من 20 ألف مرة يوميًا دون أن يشعر بذلك.',
+    animated:'breathe'
+  },
+  lungRight: {
+    icon:'🫁', name:'الرئة اليمنى',
+    desc:'أكبر قليلًا من الرئة اليسرى وتتكون من ثلاثة فصوص بدلًا من فصين، وتؤدي نفس وظيفة التنفس وتبادل الغازات.',
+    fact:'مساحة سطح الرئتين الداخلية إذا فُرشت تصل إلى نحو 70 مترًا مربعًا، أي بحجم ملعب تنس تقريبًا!',
+    animated:'breathe'
+  },
+  heart: {
+    icon:'❤️', name:'القلب',
+    desc:'عضلة تضخ الدم إلى كل أنحاء الجسم عبر شبكة من الأوعية الدموية، ويتكون من أربع حجرات: أذينين وبطينين، وينظم اتجاه الدم عبر صمامات.',
+    fact:'ينبض القلب حوالي 100 ألف مرة يوميًا، ويضخ ما يقارب 7500 لتر من الدم كل يوم!',
+    animated:'heartbeat'
+  },
+  liver: {
+    icon:'🍖', name:'الكبد',
+    desc:'أكبر عضو داخلي في الجسم، يقوم بتنقية الدم من السموم، وإنتاج الصفراء لهضم الدهون، وتخزين الطاقة على شكل جليكوجين.',
+    fact:'يمتلك الكبد قدرة مذهلة على التجدد؛ يمكنه استعادة حجمه الطبيعي حتى لو أُزيل منه 75% تقريبًا.',
+    animated:false
+  },
+  stomach: {
+    icon:'🥞', name:'المعدة',
+    desc:'كيس عضلي يفرز أحماضًا وإنزيمات هاضمة لتكسير الطعام، ويمزجه ليصبح سائلًا شبه مهضوم يسمى الكيموس قبل انتقاله إلى الأمعاء.',
+    fact:'حمض المعدة قوي بما يكفي لإذابة المعادن، لكن بطانة المعدة تتجدد باستمرار لحمايتها من هذا الحمض.',
+    animated:false
+  },
+  kidneyLeft: {
+    icon:'🫘', name:'الكلية اليسرى',
+    desc:'عضو على شكل حبة فاصولياء يقوم بترشيح الدم من الفضلات والسوائل الزائدة، وتحويلها إلى بول يُطرح خارج الجسم.',
+    fact:'تقوم الكليتان معًا بترشيح كامل كمية الدم في الجسم أكثر من 40 مرة كل يوم.',
+    animated:false
+  },
+  kidneyRight: {
+    icon:'🫘', name:'الكلية اليمنى',
+    desc:'تعمل مع الكلية اليسرى على تنظيم توازن الماء والأملاح في الجسم، وتنظيم ضغط الدم، وإنتاج هرمونات مهمة.',
+    fact:'الكلية اليمنى تقع عادة أسفل قليلًا من اليسرى بسبب وجود الكبد فوقها مباشرة.',
+    animated:false
+  },
+  intestines: {
+    icon:'🌀', name:'الأمعاء',
+    desc:'تشمل الأمعاء الدقيقة والغليظة، وتكمل عملية الهضم وامتصاص العناصر الغذائية والماء من الطعام قبل طرح الفضلات.',
+    fact:'يبلغ طول الأمعاء الدقيقة عند فرده حوالي 6 إلى 7 أمتار، أي أطول من طول الشخص البالغ بعدة أضعاف.',
+    animated:false
+  },
+  bones: {
+    icon:'🦴', name:'العظام (الساقان)',
+    desc:'الهيكل العظمي يدعم الجسم ويحميه، ويسمح بالحركة عبر ارتباطه بالعضلات، كما ينتج نخاع العظم خلايا الدم الحمراء والبيضاء.',
+    fact:'عظم الفخذ هو أطول وأقوى عظمة في جسم الإنسان، ويمكنه تحمل وزنًا يعادل عدة أضعاف وزن الجسم.',
+    animated:false
+  }
+};
+
+const panel = document.getElementById('panel');
+let activeEl = null;
+let heartInterval = null;
+
+function renderPanel(key){
+  const o = organs[key];
+  let controlsHTML = '';
+  if(o.animated === 'heartbeat'){
+    controlsHTML = `
+      <div class="controls">
+        <label>سرعة نبض القلب <span id="bpmVal">70</span> نبضة/دقيقة</label>
+        <input type="range" id="bpmSlider" min="40" max="180" value="70">
+      </div>`;
+  } else if(o.animated === 'breathe'){
+    controlsHTML = `
+      <div class="controls">
+        <label>سرعة التنفس <span id="brVal">14</span> نفس/دقيقة</label>
+        <input type="range" id="brSlider" min="6" max="40" value="14">
+      </div>`;
+  }
+
+  panel.innerHTML = `
+    <h2><span class="icon">${o.icon}</span>${o.name}</h2>
+    <p>${o.desc}</p>
+    <div class="fact">💡 ${o.fact}</div>
+    ${controlsHTML}
+  `;
+
+  if(o.animated === 'heartbeat'){
+    const slider = document.getElementById('bpmSlider');
+    const val = document.getElementById('bpmVal');
+    slider.addEventListener('input', ()=>{
+      val.textContent = slider.value;
+      startHeartAnim(parseInt(slider.value));
+    });
+    startHeartAnim(parseInt(slider.value));
+  } else {
+    stopHeartAnim();
+  }
+
+  if(o.animated === 'breathe'){
+    const slider = document.getElementById('brSlider');
+    const val = document.getElementById('brVal');
+    slider.addEventListener('input', ()=>{
+      val.textContent = slider.value;
+      startBreatheAnim(parseInt(slider.value));
+    });
+    startBreatheAnim(parseInt(slider.value));
+  } else {
+    stopBreatheAnim();
+  }
+}
+
+function startHeartAnim(bpm){
+  stopHeartAnim();
+  const heart = document.getElementById('heart');
+  const period = 60000/bpm;
+  let growing = true;
+  heartInterval = setInterval(()=>{
+    heart.style.transition = `transform ${period/2/1000}s ease-in-out`;
+    heart.style.transform = growing ? 'scale(1.25)' : 'scale(1)';
+    growing = !growing;
+  }, period/2);
+}
+function stopHeartAnim(){
+  if(heartInterval){ clearInterval(heartInterval); heartInterval=null; }
+  const heart = document.getElementById('heart');
+  heart.style.transform = 'scale(1)';
+}
+
+let breatheInterval = null;
+function startBreatheAnim(rate){
+  stopBreatheAnim();
+  const l1 = document.getElementById('lungLeft');
+  const l2 = document.getElementById('lungRight');
+  const period = 60000/rate;
+  let growing = true;
+  breatheInterval = setInterval(()=>{
+    const t = `transform ${period/2/1000}s ease-in-out`;
+    l1.style.transition = t; l2.style.transition = t;
+    const sc = growing ? 'scale(1.12)' : 'scale(1)';
+    l1.style.transform = sc; l2.style.transform = sc;
+    growing = !growing;
+  }, period/2);
+}
+function stopBreatheAnim(){
+  if(breatheInterval){ clearInterval(breatheInterval); breatheInterval=null; }
+  document.getElementById('lungLeft').style.transform = 'scale(1)';
+  document.getElementById('lungRight').style.transform = 'scale(1)';
+}
+
+document.querySelectorAll('.organ').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    if(activeEl) activeEl.classList.remove('active');
+    el.classList.add('active');
+    activeEl = el;
+    renderPanel(el.id);
+  });
+});
+
+// نبض القلب تلقائيًا حتى قبل الاختيار (تأثير جمالي بسيط)
+startHeartAnim(70);
+startBreatheAnim(14);
+</script>
+
+</body>
+</html>

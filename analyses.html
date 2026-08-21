@@ -1,0 +1,549 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كواشف التحليل الطبية | محاكاة تفاعلية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef2f0;
+    --paper:#ffffff;
+    --ink:#12232f;
+    --muted:#5c7770;
+    --line:#d9e2df;
+    --accent:#c1443c;
+    --accent-soft:rgba(193,68,60,0.09);
+    --normal:#2f9e6a;
+    --normal-soft:rgba(47,158,106,0.1);
+    --abn:#c1443c;
+    --abn-soft:rgba(193,68,60,0.1);
+    --grid: rgba(18,35,47,0.045);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(0deg, var(--grid) 0px, var(--grid) 1px, transparent 1px, transparent 28px),
+      repeating-linear-gradient(90deg, var(--grid) 0px, var(--grid) 1px, transparent 1px, transparent 28px),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Tajawal', sans-serif;
+    min-height:100vh;
+    padding:30px 16px 90px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    margin-bottom:34px;
+  }
+  .stamp{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.16em;
+    color:var(--accent);
+    border:1.5px solid var(--accent);
+    padding:5px 16px; border-radius:3px;
+    margin-bottom:16px;
+    transform:rotate(-1deg);
+    background:var(--accent-soft);
+  }
+  h1{
+    font-size:clamp(28px,5.4vw,44px);
+    font-weight:900;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .sub{color:var(--muted); font-size:14.5px; max-width:600px; line-height:1.9;}
+  .disclaimer{
+    margin-top:14px;
+    font-size:12px; color:var(--muted);
+    background:var(--paper); border:1px dashed var(--line);
+    padding:8px 14px; border-radius:8px;
+    max-width:560px;
+  }
+
+  section{margin-bottom:44px;}
+  .section-head{
+    display:flex; align-items:baseline; gap:10px;
+    margin-bottom:16px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:8px;
+  }
+  .section-head .idx{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px; color:var(--accent); font-weight:700;
+  }
+  .section-head h2{font-size:20px; margin:0; font-weight:700;}
+
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+    box-shadow: 0 1px 0 var(--line);
+  }
+
+  /* ===== URINE STRIP ===== */
+  .urine-layout{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap:26px;
+  }
+  @media (max-width:760px){ .urine-layout{grid-template-columns:1fr;} }
+
+  .strip-stage{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+  }
+  .cup{
+    position:relative;
+    width:80px; height:60px;
+    background:linear-gradient(180deg, rgba(224,196,90,0.55), rgba(224,196,90,0.75));
+    border:2px solid #c9b45a;
+    border-radius:0 0 14px 14px;
+    margin-top:6px;
+  }
+  .cup::before{
+    content:"عيّنة"; position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+    font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace;
+  }
+  .strip{
+    display:flex; flex-direction:column-reverse;
+    width:34px;
+    border:1px solid #cfcabf;
+    background:#f4efe3;
+    border-radius:3px;
+    overflow:hidden;
+    box-shadow:0 6px 14px rgba(0,0,0,0.1);
+    transition: transform .9s cubic-bezier(.4,0,.2,1);
+  }
+  .strip.dip{ transform:translateY(58px); }
+  .pad{
+    height:22px;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+    transition: background-color .5s ease;
+  }
+  .dip-btn{
+    font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px;
+    background:var(--ink); color:#fff; border:none;
+    padding:10px 20px; border-radius:7px; cursor:pointer;
+    transition: transform .15s, background .2s;
+  }
+  .dip-btn:hover{ background:var(--accent); transform:translateY(-1px); }
+  .timer-note{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); }
+
+  .params{
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .param-row{
+    display:grid;
+    grid-template-columns: 120px 1fr 64px;
+    align-items:center;
+    gap:12px;
+  }
+  @media (max-width:600px){ .param-row{grid-template-columns: 90px 1fr 54px; } }
+  .param-row .pname{ font-size:13px; font-weight:700; }
+  .param-row .pname small{ display:block; font-weight:400; color:var(--muted); font-size:10.5px; font-family:'JetBrains Mono',monospace;}
+  .param-row input[type=range]{ width:100%; }
+  .param-row .swatch{
+    width:100%; height:24px; border-radius:5px; border:1px solid var(--line);
+  }
+
+  input[type=range]{
+    -webkit-appearance:none; height:6px; border-radius:4px;
+    background:var(--line); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
+    background:#fff; border:3px solid var(--ink); cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:17px; height:17px; border-radius:50%; background:#fff; border:3px solid var(--ink); cursor:pointer;
+  }
+
+  /* results table */
+  table{ width:100%; border-collapse:collapse; margin-top:22px; font-size:13px; }
+  th{
+    text-align:right; font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    letter-spacing:.06em; color:var(--muted); padding:8px 10px; border-bottom:1.5px solid var(--ink);
+  }
+  td{ padding:10px; border-bottom:1px solid var(--line); }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    padding:3px 10px; border-radius:999px; display:inline-block;
+  }
+  .chip.normal{ background:var(--normal-soft); color:var(--normal); }
+  .chip.abn{ background:var(--abn-soft); color:var(--abn); }
+
+  /* ===== GLUCOSE METER ===== */
+  .device-layout{
+    display:grid; grid-template-columns: 240px 1fr; gap:26px; align-items:center;
+  }
+  @media (max-width:700px){ .device-layout{grid-template-columns:1fr;} }
+  .meter{
+    background:#1c2b2c; border-radius:16px; padding:18px 16px 22px;
+    width:220px; margin:0 auto;
+    box-shadow:0 10px 26px rgba(0,0,0,0.22);
+  }
+  .meter .screen{
+    background:#c9e8d8; border-radius:8px; padding:16px 10px; text-align:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .meter .screen .big{ font-size:38px; font-weight:700; color:#123; line-height:1; }
+  .meter .screen .unit{ font-size:11px; color:#345; margin-top:4px;}
+  .meter .screen .flag{ margin-top:8px; font-size:12px; font-weight:700; padding:3px 10px; border-radius:6px; display:inline-block;}
+  .meter .brand{ text-align:center; color:#8fae9f; font-size:10px; margin-top:12px; letter-spacing:.14em; font-family:'JetBrains Mono',monospace;}
+
+  .glucose-scale{
+    display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); margin-top:6px;
+  }
+  .zones-bar{ height:8px; border-radius:4px; margin-top:10px;
+    background:linear-gradient(90deg,#c1443c 0 12%, #2f9e6a 12% 38%, #d9a53c 38% 58%, #c1443c 58% 100%);
+  }
+
+  /* ===== PREGNANCY TEST ===== */
+  .preg-layout{
+    display:grid; grid-template-columns: 260px 1fr; gap:26px; align-items:center;
+  }
+  @media (max-width:700px){ .preg-layout{grid-template-columns:1fr;} }
+  .preg-strip{
+    background:#fff; border:2px solid var(--line); border-radius:10px;
+    padding:14px; width:230px; margin:0 auto;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .preg-window{
+    width:70px; height:170px; background:#f7f5ef; border:1px solid var(--line); border-radius:6px;
+    position:relative; overflow:hidden;
+  }
+  .preg-line{
+    position:absolute; left:8px; right:8px; height:16px; border-radius:3px;
+    background:#c1443c; opacity:0; transition:opacity .5s ease;
+  }
+  .preg-line.control{ top:30px; }
+  .preg-line.test{ bottom:30px; }
+  .preg-result{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px;
+    padding:4px 14px; border-radius:999px;
+  }
+
+  .info-box{
+    margin-top:16px; background:var(--accent-soft); border:1px solid rgba(193,68,60,0.25);
+    border-radius:9px; padding:12px 16px; font-size:12.5px; color:var(--ink); line-height:1.8;
+  }
+
+  footer{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:50px; font-family:'JetBrains Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="stamp">مختبر تحاليل افتراضي</div>
+    <h1>كواشف التحليل الطبية</h1>
+    <p class="sub">محاكاة لثلاثة كواشف شائعة في التحاليل الطبية: شريط تحليل البول، جهاز قياس السكر، وشريط اختبار الحمل — حرّك القيم وشاهد التفاعل اللوني والنتيجة فورًا.</p>
+    <div class="disclaimer">⚠️ محاكاة تعليمية مبسّطة لأغراض الفهم فقط، وليست بديلاً عن تحليل مخبري حقيقي أو استشارة طبية.</div>
+  </header>
+
+  <!-- ===================== URINE STRIP ===================== -->
+  <section>
+    <div class="section-head"><span class="idx">01</span><h2>شريط تحليل البول متعدد المؤشرات</h2></div>
+    <div class="card">
+      <div class="urine-layout">
+        <div class="strip-stage">
+          <div class="strip" id="stripEl"></div>
+          <div class="cup"></div>
+          <button class="dip-btn" id="dipBtn">🧫 اغمس الشريط</button>
+          <div class="timer-note" id="timerNote">جاهز للغمس</div>
+        </div>
+
+        <div class="params" id="paramsGrid"></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>المؤشر</th><th>النتيجة</th><th>المدى الطبيعي</th><th>التقييم</th></tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== GLUCOSE METER ===================== -->
+  <section>
+    <div class="section-head"><span class="idx">02</span><h2>جهاز قياس سكر الدم</h2></div>
+    <div class="card">
+      <div class="device-layout">
+        <div class="meter">
+          <div class="screen">
+            <div class="big" id="glucoseVal">100</div>
+            <div class="unit">mg/dL</div>
+            <div class="flag" id="glucoseFlag">طبيعي</div>
+          </div>
+          <div class="brand">GLUCO·SIM</div>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:700;">مستوى الجلوكوز في الدم: <span id="glucoseEcho">100</span> mg/dL</label>
+          <input type="range" id="glucoseSlider" min="40" max="400" step="1" value="100" style="width:100%; margin-top:10px;">
+          <div class="zones-bar"></div>
+          <div class="glucose-scale">
+            <span>40 نقص حاد</span><span>70</span><span>140</span><span>200</span><span>400 ارتفاع حاد</span>
+          </div>
+          <div class="info-box" id="glucoseInfo"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PREGNANCY TEST ===================== -->
+  <section>
+    <div class="section-head"><span class="idx">03</span><h2>شريط اختبار الحمل (hCG)</h2></div>
+    <div class="card">
+      <div class="preg-layout">
+        <div class="preg-strip">
+          <div class="preg-window">
+            <div class="preg-line control" id="controlLine"></div>
+            <div class="preg-line test" id="testLine"></div>
+          </div>
+          <div class="preg-result" id="pregResult">أدخل عيّنة</div>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:700;">مستوى هرمون hCG: <span id="hcgEcho">0</span> mIU/mL</label>
+          <input type="range" id="hcgSlider" min="0" max="200" step="1" value="0" style="width:100%; margin-top:10px;">
+          <div class="glucose-scale">
+            <span>0</span><span>25 (عتبة الإيجابية)</span><span>200</span>
+          </div>
+          <div class="info-box" id="hcgInfo">خط التحكّم (Control) يظهر دائمًا للتأكد من صلاحية الشريط. خط الاختبار (Test) يظهر فقط عند تجاوز هرمون hCG العتبة التقريبية 25 mIU/mL.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>SIMULATION · MEDICAL DIAGNOSTIC REAGENTS · EDUCATIONAL USE ONLY</footer>
+</div>
+
+<script>
+// ================= URINE STRIP =================
+const PARAMS = [
+  { key:'glu', name:'الجلوكوز', unit:'mg/dL', type:'level',
+    levels:[
+      {label:'سلبي', color:'#4a90a4'},
+      {label:'أثر (~100)', color:'#7ea86a'},
+      {label:'+ (250)', color:'#a3a05a'},
+      {label:'++ (500)', color:'#b5793f'},
+      {label:'+++ (1000)', color:'#a85c2e'}
+    ], normalMax:0 },
+  { key:'pro', name:'البروتين', unit:'mg/dL', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f2e26a'},
+      {label:'أثر (15)', color:'#d9dd7a'},
+      {label:'+ (30)', color:'#b9d98a'},
+      {label:'++ (100)', color:'#8fcf9a'},
+      {label:'+++ (300)', color:'#5cb89a'}
+    ], normalMax:1 },
+  { key:'ph', name:'الرقم الهيدروجيني', unit:'pH', type:'continuous', min:5, max:9, step:0.5,
+    stops:[[5,'#e0793c'],[6,'#e0c23c'],[7,'#8fcf7a'],[8,'#4fbf8a'],[9,'#3b8fc2']],
+    normalMin:5, normalMax:8 },
+  { key:'blo', name:'الدم', unit:'', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f2e6a0'},
+      {label:'أثر', color:'#d9d98a'},
+      {label:'+', color:'#a8c47a'},
+      {label:'++', color:'#6fae6f'},
+      {label:'+++', color:'#3d8f5a'}
+    ], normalMax:0 },
+  { key:'ket', name:'الكيتونات', unit:'mg/dL', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f2ddd0'},
+      {label:'أثر (5)', color:'#e0b8c0'},
+      {label:'+ (15)', color:'#c98fb0'},
+      {label:'++ (40)', color:'#a868a0'},
+      {label:'+++ (80)', color:'#7a4590'}
+    ], normalMax:0 },
+  { key:'leu', name:'الكريات البيضاء', unit:'/µL', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f2ecd8'},
+      {label:'أثر', color:'#ddd0e0'},
+      {label:'+', color:'#c0a8d0'},
+      {label:'++', color:'#a37fc0'},
+      {label:'+++', color:'#7a52a8'}
+    ], normalMax:0 },
+  { key:'nit', name:'النترات', unit:'', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f7f2e8'},
+      {label:'إيجابي', color:'#e88fa0'}
+    ], normalMax:0 },
+  { key:'bil', name:'البيليروبين', unit:'', type:'level',
+    levels:[
+      {label:'سلبي', color:'#f2ecd8'},
+      {label:'+', color:'#e0c890'},
+      {label:'++', color:'#c99a5a'},
+      {label:'+++', color:'#a8703a'}
+    ], normalMax:0 },
+  { key:'uro', name:'اليوروبيلينوجين', unit:'mg/dL', type:'level',
+    levels:[
+      {label:'طبيعي (0.2)', color:'#e8a878'},
+      {label:'+ (1)', color:'#d98a5a'},
+      {label:'++ (2)', color:'#c26a48'},
+      {label:'+++ (4+)', color:'#a8442e'}
+    ], normalMax:0 },
+  { key:'sg', name:'الكثافة النوعية', unit:'', type:'continuous', min:1.000, max:1.030, step:0.005,
+    stops:[[1.000,'#3b7fc2'],[1.010,'#4fbf8a'],[1.020,'#c7cf3b'],[1.030,'#b5793f']],
+    normalMin:1.005, normalMax:1.030 }
+];
+
+function hexToRgb(hex){ const v=hex.replace('#',''); return [parseInt(v.substr(0,2),16),parseInt(v.substr(2,2),16),parseInt(v.substr(4,2),16)]; }
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(x=>Math.round(x).toString(16).padStart(2,'0')).join(''); }
+function colorFromStops(stops, val){
+  for(let i=0;i<stops.length-1;i++){
+    const [p1,c1]=stops[i], [p2,c2]=stops[i+1];
+    if(val>=p1 && val<=p2){
+      const t = p2===p1?0:(val-p1)/(p2-p1);
+      const [r1,g1,b1]=hexToRgb(c1), [r2,g2,b2]=hexToRgb(c2);
+      return rgbToHex(r1+(r2-r1)*t, g1+(g2-g1)*t, b1+(b2-b1)*t);
+    }
+  }
+  return stops[stops.length-1][1];
+}
+
+const state = {};
+PARAMS.forEach(p=>{ state[p.key] = p.type==='level' ? 0 : (p.min); });
+
+const stripEl = document.getElementById('stripEl');
+const paramsGrid = document.getElementById('paramsGrid');
+const resultsBody = document.getElementById('resultsBody');
+
+// build pads (reverse order so first param ends up at strip tip)
+PARAMS.forEach(p=>{
+  const pad = document.createElement('div');
+  pad.className = 'pad';
+  pad.id = 'pad-'+p.key;
+  stripEl.appendChild(pad);
+});
+
+// build sliders
+PARAMS.forEach(p=>{
+  const row = document.createElement('div');
+  row.className = 'param-row';
+  const maxAttr = p.type==='level' ? (p.levels.length-1) : p.max;
+  const minAttr = p.type==='level' ? 0 : p.min;
+  const stepAttr = p.type==='level' ? 1 : p.step;
+  row.innerHTML = `
+    <div class="pname">${p.name}<small>${p.unit||''}</small></div>
+    <input type="range" data-key="${p.key}" min="${minAttr}" max="${maxAttr}" step="${stepAttr}" value="${state[p.key]}">
+    <div class="swatch" id="sw-${p.key}"></div>
+  `;
+  paramsGrid.appendChild(row);
+});
+
+function currentColor(p, val){
+  if(p.type==='level') return p.levels[val].color;
+  return colorFromStops(p.stops, val);
+}
+function currentLabel(p, val){
+  if(p.type==='level') return p.levels[val].label;
+  return val.toFixed(p.step<0.01?3:1) + ' ' + p.unit;
+}
+function isNormal(p, val){
+  if(p.type==='level') return val <= p.normalMax;
+  return val >= p.normalMin && val <= p.normalMax;
+}
+function normalRangeText(p){
+  if(p.type==='level') return p.levels[p.normalMax].label;
+  return `${p.normalMin} – ${p.normalMax}`;
+}
+
+function renderUrine(){
+  resultsBody.innerHTML='';
+  PARAMS.forEach(p=>{
+    const val = state[p.key];
+    const color = currentColor(p, val);
+    document.getElementById('pad-'+p.key).style.background = color;
+    document.getElementById('sw-'+p.key).style.background = color;
+    const normal = isNormal(p, val);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${p.name}</b></td>
+      <td style="font-family:'JetBrains Mono',monospace;">${currentLabel(p,val)}</td>
+      <td style="font-family:'JetBrains Mono',monospace; color:var(--muted);">${normalRangeText(p)}</td>
+      <td><span class="chip ${normal?'normal':'abn'}">${normal?'طبيعي':'غير طبيعي'}</span></td>
+    `;
+    resultsBody.appendChild(tr);
+  });
+}
+
+paramsGrid.addEventListener('input', (e)=>{
+  if(e.target.matches('input[type=range]')){
+    const key = e.target.dataset.key;
+    const p = PARAMS.find(pp=>pp.key===key);
+    state[key] = p.type==='level' ? parseInt(e.target.value) : parseFloat(e.target.value);
+    renderUrine();
+  }
+});
+
+document.getElementById('dipBtn').addEventListener('click', ()=>{
+  const stripEl2 = document.getElementById('stripEl');
+  const timerNote = document.getElementById('timerNote');
+  stripEl2.classList.add('dip');
+  timerNote.textContent = 'جارٍ الغمس...';
+  setTimeout(()=>{
+    stripEl2.classList.remove('dip');
+    timerNote.textContent = 'انتظر التفاعل اللوني (~60 ثانية واقعيًا)';
+    renderUrine();
+  }, 900);
+});
+
+renderUrine();
+
+// ================= GLUCOSE METER =================
+const glucoseSlider = document.getElementById('glucoseSlider');
+const glucoseVal = document.getElementById('glucoseVal');
+const glucoseEcho = document.getElementById('glucoseEcho');
+const glucoseFlag = document.getElementById('glucoseFlag');
+const glucoseInfo = document.getElementById('glucoseInfo');
+
+function renderGlucose(){
+  const v = parseInt(glucoseSlider.value);
+  glucoseVal.textContent = v;
+  glucoseEcho.textContent = v;
+  let flag, bg, msg;
+  if(v < 70){ flag='نقص سكر'; bg='#c1443c'; msg='مستوى منخفض جدًا (Hypoglycemia) — يتطلب تدخلاً سريعًا في الواقع.'; }
+  else if(v <= 140){ flag='طبيعي'; bg='#2f9e6a'; msg='ضمن المعدل الطبيعي الصائم/بعد الأكل.'; }
+  else if(v <= 200){ flag='مرتفع'; bg='#d9a53c'; msg='أعلى من الطبيعي — قد يشير لمقدمات سكري أو حالة بعد وجبة.'; }
+  else{ flag='ارتفاع حاد'; bg='#c1443c'; msg='ارتفاع كبير (Hyperglycemia) — يستدعي متابعة طبية.'; }
+  glucoseFlag.textContent = flag;
+  glucoseFlag.style.background = bg;
+  glucoseFlag.style.color = '#fff';
+  glucoseInfo.textContent = msg;
+}
+glucoseSlider.addEventListener('input', renderGlucose);
+renderGlucose();
+
+// ================= PREGNANCY TEST =================
+const hcgSlider = document.getElementById('hcgSlider');
+const hcgEcho = document.getElementById('hcgEcho');
+const controlLine = document.getElementById('controlLine');
+const testLine = document.getElementById('testLine');
+const pregResult = document.getElementById('pregResult');
+
+function renderPreg(){
+  const v = parseInt(hcgSlider.value);
+  hcgEcho.textContent = v;
+  controlLine.style.opacity = 1;
+  const testOpacity = Math.min(1, Math.max(0, (v-15)/25));
+  testLine.style.opacity = testOpacity;
+  if(v >= 25){
+    pregResult.textContent = 'إيجابي (حمل)';
+    pregResult.style.background = 'var(--abn-soft)';
+    pregResult.style.color = 'var(--abn)';
+  } else {
+    pregResult.textContent = 'سلبي';
+    pregResult.style.background = 'var(--normal-soft)';
+    pregResult.style.color = 'var(--normal)';
+  }
+}
+hcgSlider.addEventListener('input', renderPreg);
+renderPreg();
+</script>
+</body>
+</html>

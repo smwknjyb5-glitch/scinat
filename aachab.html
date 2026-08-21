@@ -1,0 +1,363 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مختبر نباتي | الأعشاب المكيّفة Adaptogens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1912;
+    --bg2:#0B140E;
+    --panel:#182617;
+    --panel2:#1F3020;
+    --panel3:#26392A;
+    --line:rgba(232,224,201,0.10);
+    --cream:#EDE6CF;
+    --gold:#CBA135;
+    --gold-soft:rgba(203,161,53,0.18);
+    --sage:#8FBE7E;
+    --sage-soft:rgba(143,190,126,0.16);
+    --muted:#9BAE92;
+    --shadow:0 20px 50px -20px rgba(0,0,0,0.65);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1000px 560px at 88% -8%, rgba(203,161,53,0.08), transparent 60%),
+      radial-gradient(900px 520px at -8% 108%, rgba(143,190,126,0.08), transparent 60%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'Tajawal',sans-serif;
+    line-height:1.7;
+  }
+  h1,h2,.display{font-family:'Amiri',serif;}
+  .wrap{max-width:1100px;margin:0 auto;padding:30px 20px 90px;}
+
+  .hero-top{text-align:center;margin-bottom:34px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--sage);
+    background:var(--sage-soft);border:1px solid rgba(143,190,126,0.3);
+    padding:6px 16px;border-radius:999px;margin-bottom:18px;letter-spacing:.3px;
+  }
+  h1{font-size:clamp(26px,4.2vw,42px);font-weight:700;margin:0 0 12px;}
+  h1 span{color:var(--gold);}
+  .lede{color:var(--muted);max-width:600px;margin:0 auto;font-size:15px;}
+
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
+  }
+
+  /* ===== CHART HERO ===== */
+  .chart-card{padding:26px 26px 20px;margin-top:8px;}
+  .chart-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .chart-title{font-size:16px;font-weight:700;font-family:'Amiri',serif;}
+  .chart-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .leg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:5px;}
+  canvas{width:100%;display:block;}
+  .chart-caption{font-size:12px;color:var(--muted);margin-top:8px;}
+
+  .slider-row{
+    display:flex;align-items:center;gap:16px;margin:20px 0 6px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px 18px;
+  }
+  .slider-row label{font-size:13.5px;color:var(--cream);white-space:nowrap;}
+  .slider-row .val{color:var(--gold);font-weight:700;font-family:'Amiri',serif;font-size:16px;}
+  input[type=range]{
+    -webkit-appearance:none;flex:1;height:6px;border-radius:4px;background:var(--panel3);outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 10px rgba(203,161,53,.6);cursor:pointer;border:2px solid #0F1912;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid #0F1912;cursor:pointer;
+  }
+  .model-note{
+    display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px 16px;
+    background:var(--gold-soft);border:1px solid rgba(203,161,53,.3);border-radius:12px;
+    font-size:12.5px;color:var(--muted);
+  }
+  .model-note b{color:var(--cream);}
+
+  /* ===== FILTER CHIPS ===== */
+  .section-title{font-size:21px;font-weight:700;font-family:'Amiri',serif;margin:52px 0 6px;}
+  .section-sub{color:var(--muted);font-size:13.5px;margin-bottom:20px;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px;}
+  .chip{
+    padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);font-size:13px;cursor:pointer;transition:.2s;user-select:none;
+  }
+  .chip:hover{border-color:rgba(143,190,126,.4);}
+  .chip.active{background:var(--sage-soft);border-color:var(--sage);color:var(--sage);}
+
+  /* ===== HERB GRID ===== */
+  .herb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:860px){.herb-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:560px){.herb-grid{grid-template-columns:1fr;}}
+  .herb{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;
+    transition:opacity .25s, transform .25s;position:relative;
+  }
+  .herb.dim{opacity:.32;}
+  .herb-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .herb-name{font-family:'Amiri',serif;font-size:17px;font-weight:700;}
+  .herb-latin{font-size:11.5px;color:var(--muted);font-style:italic;display:block;margin-top:2px;}
+  .herb-origin{font-size:11.5px;color:var(--muted);margin:8px 0 10px;}
+  .herb-origin b{color:var(--sage);font-weight:500;}
+  .herb-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .tag{font-size:10.5px;padding:3px 9px;border-radius:999px;background:var(--panel3);color:var(--cream);border:1px solid var(--line);}
+  .herb-note{font-size:12.5px;color:var(--muted);margin-bottom:12px;}
+  .evidence{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+  .dots{display:flex;gap:3px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--panel3);}
+  .dot.on{background:var(--gold);}
+
+  /* ===== MECHANISM ESSAY ===== */
+  .essay{margin-top:56px;padding:32px 34px;}
+  .essay p{font-size:14.5px;color:var(--cream);margin:0 0 16px;}
+  .essay p:first-of-type::first-letter{
+    font-family:'Amiri',serif;font-size:52px;font-weight:700;color:var(--gold);
+    float:right;line-height:.75;margin-inline-start:10px;margin-top:6px;
+  }
+  .essay .stages{display:flex;gap:14px;margin-top:22px;flex-wrap:wrap;}
+  .stage{flex:1;min-width:150px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .stage b{display:block;color:var(--gold);font-family:'Amiri',serif;font-size:14.5px;margin-bottom:4px;}
+  .stage span{font-size:12px;color:var(--muted);}
+
+  footer{color:var(--muted);font-size:11.5px;text-align:center;margin-top:56px;opacity:.75;line-height:2;}
+  footer b{color:var(--sage);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero-top">
+    <div class="eyebrow">🌿 مختبر نباتي — علم التكيّف الحيوي</div>
+    <h1>كيف <span>تُطفئ</span> الأعشاب المكيّفة شرارة التوتر؟</h1>
+    <p class="lede">حرّك شدة الحدث الضاغط وشاهد كيف يختلف مسار هرمون الكورتيزول افتراضيًا بين جسم بلا دعم، وآخر يتلقّى مركّبًا مكيّفًا (Adaptogen).</p>
+  </div>
+
+  <!-- CHART -->
+  <div class="card chart-card">
+    <div class="chart-head">
+      <div class="chart-title">مسار الكورتيزول خلال 24 ساعة (نموذج توضيحي)</div>
+      <div class="chart-legend">
+        <span><i class="leg-dot" style="background:var(--muted);opacity:.5"></i>الإيقاع اليومي الطبيعي</span>
+        <span><i class="leg-dot" style="background:var(--gold)"></i>بدون دعم مكيّف</span>
+        <span><i class="leg-dot" style="background:var(--sage)"></i>مع دعم مكيّف</span>
+      </div>
+    </div>
+    <canvas id="chart" height="260"></canvas>
+    <div class="chart-caption">حدث ضاغط افتراضي عند الساعة 9 صباحًا (مثل اجتماع متوتر أو موعد نهائي).</div>
+
+    <div class="slider-row">
+      <label>شدة الحدث الضاغط</label>
+      <input type="range" id="stress" min="1" max="10" step="1" value="6">
+      <span class="val" id="stressVal">6</span>
+    </div>
+
+    <div class="model-note">
+      <span>💡</span>
+      <div><b>ملاحظة منهجية:</b> هذا رسم توضيحي مبسّط للفرضية العلمية القائلة إن الأعشاب المكيّفة "تُخفّف ذروة" استجابة التوتر و"تُسرّع" العودة إلى خط الأساس — وليس بيانات سريرية فعلية. الاستجابة الحقيقية تختلف حسب العشبة والجرعة والفرد.</div>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="section-title">دليل الأعشاب المكيّفة</div>
+  <div class="section-sub">اختر هدفًا لتمييز الأعشاب المرتبطة به تقليديًا وبحثيًا.</div>
+  <div class="chips" id="chips"></div>
+  <div class="herb-grid" id="herbGrid"></div>
+
+  <!-- ESSAY -->
+  <div class="card essay">
+    <p>يعود مصطلح "مكيّف" (Adaptogen) إلى فرضية طوّرها علماء صيادلة سوفييت في منتصف القرن العشرين، مستوحاة من نظرية "متلازمة التكيّف العام" لعالم الغدد الصمّاء هانز سيلييه، والتي تصف كيف يمرّ الجسم بثلاث مراحل عند التعرّض لضغط مستمر: إنذار، ثم مقاومة، ثم إرهاق إن استمر الضغط دون تعافٍ.</p>
+    <p>الفكرة المركزية هي أن هذه النباتات لا "تُهدّئ" الجسم بشكل مباشر كالمهدئات، بل تعمل — بحسب الفرضية — على تطبيع محور الغدة النخامية والكظرية، فترفع القدرة على التحمّل حين يكون الجسم منهكًا، وتُخفّف فرط التنبيه حين يكون تحت ضغط حاد، دون أن تدفعه إلى اتجاه واحد ثابت.</p>
+    <div class="stages">
+      <div class="stage"><b>١. الإنذار</b><span>استجابة فورية للضغط: ارتفاع الكورتيزول والأدرينالين.</span></div>
+      <div class="stage"><b>٢. المقاومة</b><span>الجسم يحاول الحفاظ على الأداء رغم استمرار الضغط.</span></div>
+      <div class="stage"><b>٣. الإرهاق</b><span>استنزاف الموارد إذا لم يحدث تعافٍ — وهنا يُفترض دور الأعشاب المكيّفة.</span></div>
+    </div>
+  </div>
+
+  <footer>
+    محتوى تعليمي عام مبني على الاستخدامات التقليدية والفرضيات العلمية الشائعة، وليس استشارة طبية.<br>
+    <b>قبل استخدام أي عشبة مكيّفة</b> — خصوصًا مع أدوية الغدة الدرقية، مثبطات المناعة، مضادات التخثر، أو أثناء الحمل والرضاعة — استشر طبيبًا أو صيدلانيًا.
+  </footer>
+
+</div>
+
+<script>
+// ---------- DATA ----------
+const herbs = [
+  {name:'أشواغاندا', latin:'Withania somnifera', origin:'الهند وشمال أفريقيا', tags:['نوم','مقاومة الإجهاد','هرمونات'], evidence:3,
+   note:'تُستخدم تقليديًا كـ"رساينا" لتجديد الحيوية في الطب الأيورفيدي، ومن أكثر الأعشاب المكيّفة بحثًا علميًا حديثًا.'},
+  {name:'الروديولا', latin:'Rhodiola rosea', origin:'المرتفعات الباردة في سيبيريا وإسكندنافيا', tags:['طاقة','تركيز','مقاومة الإجهاد'], evidence:2,
+   note:'استخدمها الفايكنج والجنود السيبيريون تاريخيًا لتحمّل البرد والإجهاد البدني الشديد.'},
+  {name:'الجينسنغ الكوري', latin:'Panax ginseng', origin:'شرق آسيا', tags:['طاقة','تركيز','مناعة'], evidence:3,
+   note:'يُعرف بـ"جذر الحياة"، ومن أقدم النباتات المستخدمة في الطب الصيني التقليدي منذ آلاف السنين.'},
+  {name:'الجينسنغ السيبيري', latin:'Eleutherococcus senticosus', origin:'سيبيريا والصين', tags:['طاقة','مقاومة الإجهاد'], evidence:2,
+   note:'استُخدم من قبل الرياضيين السوفييت سابقًا لتعزيز التحمّل، وليس جينسنغًا حقيقيًا رغم الاسم الشائع.'},
+  {name:'الريحان المقدس', latin:'Ocimum sanctum (Tulsi)', origin:'شبه القارة الهندية', tags:['مقاومة الإجهاد','تركيز'], evidence:2,
+   note:'نبتة مقدّسة في الطب الأيورفيدي تُلقّب بـ"ملكة الأعشاب"، تُزرع تقليديًا قرب المنازل والمعابد.'},
+  {name:'شيساندرا', latin:'Schisandra chinensis', origin:'الصين وشرق روسيا', tags:['تركيز','مقاومة الإجهاد'], evidence:1,
+   note:'تُعرف بـ"الفاكهة ذات النكهات الخمس"، واستُخدمت تقليديًا لدعم التحمّل والتركيز الذهني الطويل.'},
+  {name:'الكورديسيبس', latin:'Cordyceps sinensis', origin:'الهضاب المرتفعة في التبت والصين', tags:['طاقة','مناعة'], evidence:1,
+   note:'فطر نادر ينمو على يرقات في المرتفعات الباردة، استُخدم تقليديًا لدعم القدرة على التحمّل.'},
+  {name:'الريشي', latin:'Ganoderma lucidum', origin:'شرق آسيا', tags:['نوم','مناعة','مقاومة الإجهاد'], evidence:2,
+   note:'يُعرف بـ"فطر الخلود" في الطب الصيني التقليدي، ويُستخدم غالبًا مساءً لدعم الاسترخاء.'},
+];
+
+const allTags = ['طاقة','نوم','تركيز','مناعة','مقاومة الإجهاد'];
+let activeTags = new Set();
+
+// ---------- RENDER CHIPS ----------
+const chipsEl = document.getElementById('chips');
+allTags.forEach(tag=>{
+  const c = document.createElement('div');
+  c.className = 'chip';
+  c.textContent = tag;
+  c.addEventListener('click', ()=>{
+    if(activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
+    c.classList.toggle('active');
+    renderHerbs();
+  });
+  chipsEl.appendChild(c);
+});
+
+// ---------- RENDER HERBS ----------
+const herbGrid = document.getElementById('herbGrid');
+function renderHerbs(){
+  herbGrid.innerHTML = '';
+  herbs.forEach(h=>{
+    const match = activeTags.size===0 || h.tags.some(t=>activeTags.has(t));
+    const el = document.createElement('div');
+    el.className = 'herb' + (match ? '' : ' dim');
+    el.innerHTML = `
+      <div class="herb-top">
+        <div>
+          <div class="herb-name">${h.name}</div>
+          <span class="herb-latin">${h.latin}</span>
+        </div>
+      </div>
+      <div class="herb-origin">الموطن: <b>${h.origin}</b></div>
+      <div class="herb-tags">${h.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="herb-note">${h.note}</div>
+      <div class="evidence">قوة الأدلة العلمية
+        <span class="dots">${[1,2,3].map(i=>`<span class="dot ${i<=h.evidence?'on':''}"></span>`).join('')}</span>
+      </div>
+    `;
+    herbGrid.appendChild(el);
+  });
+}
+renderHerbs();
+
+// ---------- CORTISOL MODEL ----------
+const stressSlider = document.getElementById('stress');
+const stressVal = document.getElementById('stressVal');
+let stressLevel = 6;
+
+function circadian(t){
+  // rough natural cortisol rhythm: peak ~8am, trough overnight
+  return 42 + 26*Math.cos((t-7.5)/24*2*Math.PI);
+}
+function spike(t, eventT, intensity, peakScale, tau){
+  if(t < eventT) return 0;
+  return intensity * peakScale * Math.exp(-(t-eventT)/tau);
+}
+function withoutCurve(t, intensity){
+  return circadian(t) + spike(t, 9, intensity, 6.5, 5.5);
+}
+function withCurve(t, intensity){
+  return circadian(t)*0.97 + spike(t, 9, intensity, 3.4, 2.6);
+}
+
+// ---------- CHART ----------
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+function fitCanvas(){
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width*dpr;
+  canvas.height = 260*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function drawChart(){
+  fitCanvas();
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = 260;
+  ctx.clearRect(0,0,w,h);
+
+  const padL=34, padR=14, padT=14, padB=28;
+  const chartW = w-padL-padR, chartH = h-padT-padB;
+
+  const N=145;
+  const pts = [];
+  for(let i=0;i<=N;i++){
+    const t = i/N*24;
+    pts.push({t, base:circadian(t), wo:withoutCurve(t,stressLevel), wi:withCurve(t,stressLevel)});
+  }
+  const maxV = Math.max(...pts.map(p=>Math.max(p.wo,p.wi,p.base))) * 1.12;
+  const minV = 0;
+
+  // grid: right-to-left, since dir=rtl the page reads right to left,
+  // but canvas coordinate space stays LTR internally; we mirror x for RTL feel.
+  function xFor(t){ return padL + (1 - t/24) * chartW; } // t=0 at right, t=24 at left
+  function yFor(v){ return padT + chartH - ((v-minV)/(maxV-minV))*chartH; }
+
+  // gridlines + hour labels
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.font = '11px Tajawal, sans-serif';
+  ctx.fillStyle = 'rgba(155,174,146,0.8)';
+  ctx.textAlign='center';
+  [0,6,12,18,24].forEach(hr=>{
+    const x = xFor(hr);
+    ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+chartH); ctx.stroke();
+    const label = hr===24?'٠٠:٠٠':(hr+':00');
+    ctx.fillText(hr+':00', x, h-8);
+  });
+
+  function drawLine(key, color, width, dash){
+    ctx.beginPath();
+    ctx.setLineDash(dash||[]);
+    pts.forEach((p,i)=>{
+      const x = xFor(p.t), y = yFor(p[key]);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin='round';
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  drawLine('base','rgba(237,230,207,0.35)',1.5,[4,4]);
+  drawLine('wo', getComputedStyle(document.documentElement).getPropertyValue('--gold'), 2.6);
+  drawLine('wi', getComputedStyle(document.documentElement).getPropertyValue('--sage'), 2.6);
+
+  // event marker at hour 9
+  const ex = xFor(9);
+  ctx.strokeStyle='rgba(255,255,255,0.18)';
+  ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(ex,padT); ctx.lineTo(ex,padT+chartH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,0.55)';
+  ctx.font='10.5px Tajawal, sans-serif';
+  ctx.fillText('⚡ الحدث الضاغط', ex, padT+10);
+}
+
+stressSlider.addEventListener('input', e=>{
+  stressLevel = +e.target.value;
+  stressVal.textContent = stressLevel;
+  drawChart();
+});
+window.addEventListener('resize', drawChart);
+drawChart();
+</script>
+</body>
+</html>

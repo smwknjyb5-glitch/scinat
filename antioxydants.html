@@ -1,0 +1,486 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة مضادات الأكسدة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@500;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F7EF;
+    --panel:#FFFFFF;
+    --ink:#1F3A2E;
+    --ink-soft:#4A6154;
+    --leaf:#4C7A3D;
+    --leaf-light:#7FAE6A;
+    --berry:#7A2E4D;
+    --berry-light:#A2557A;
+    --gold:#D9A441;
+    --radical:#E15A32;
+    --radical-dark:#B33E1E;
+    --calm:#4C8CA8;
+    --shadow:0 10px 28px rgba(31,58,46,.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Tajawal', sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(76,122,61,.10), transparent 40%),
+      radial-gradient(circle at 95% 15%, rgba(122,46,77,.10), transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    line-height:1.75;
+    padding-bottom:70px;
+  }
+  h1,h2,h3,.display{ font-family:'Markazi Text', serif; font-weight:700; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
+
+  header.hero{ text-align:center; padding:46px 20px 10px; }
+  .eyebrow{
+    letter-spacing:2px; font-weight:800; color:var(--leaf);
+    font-size:.8rem; text-transform:uppercase;
+  }
+  header.hero h1{ font-size:clamp(2.2rem,5.5vw,3.6rem); margin:8px 0 10px; color:var(--ink); }
+  header.hero p.sub{ max-width:560px; margin:0 auto; color:var(--ink-soft); }
+
+  /* ===== battle game (signature element) ===== */
+  .battle-wrap{
+    background:var(--panel);
+    border-radius:22px;
+    box-shadow:var(--shadow);
+    margin:32px auto 0;
+    max-width:760px;
+    padding:22px;
+    position:relative;
+    overflow:hidden;
+  }
+  .battle-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  .battle-head h3{ font-size:1.3rem; color:var(--ink); }
+  .battle-stats{ display:flex; gap:14px; font-size:.85rem; color:var(--ink-soft); }
+  .battle-stats b{ color:var(--leaf); font-family:'Markazi Text',serif; font-size:1.1rem; }
+  .battle-arena{
+    position:relative;
+    height:280px;
+    border-radius:16px;
+    background:radial-gradient(circle at 50% 55%, #EAF3E4, #DCEBD3 70%);
+    overflow:hidden;
+    border:2px solid #E1EAD9;
+  }
+  .cell-core{
+    position:absolute; top:50%; left:50%;
+    width:110px; height:110px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, #B7D9A8, var(--leaf));
+    box-shadow:0 0 0 6px rgba(76,122,61,.15);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Markazi Text',serif; font-size:.95rem;
+    text-align:center; padding:10px;
+    transition:box-shadow .3s ease, filter .3s ease;
+  }
+  .cell-core.stressed{ filter:saturate(.4) brightness(.85); box-shadow:0 0 0 6px rgba(225,90,50,.25); }
+  .radical{
+    position:absolute;
+    width:34px; height:34px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #F7906B, var(--radical));
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:.8rem; font-weight:800;
+    box-shadow:0 0 0 3px rgba(225,90,50,.25);
+    animation: pulse-r 1.4s ease-in-out infinite;
+  }
+  .radical::before, .radical::after{
+    content:''; position:absolute; width:14px; height:2px; background:var(--radical-dark);
+  }
+  .radical::before{ transform:rotate(45deg); }
+  .radical::after{ transform:rotate(-45deg); }
+  @keyframes pulse-r{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.12);} }
+  .radical.neutralized{
+    animation:none;
+    background:radial-gradient(circle at 35% 30%, #9FD3E8, var(--calm));
+    box-shadow:0 0 0 3px rgba(76,140,168,.2);
+  }
+  .radical.neutralized::before, .radical.neutralized::after{ display:none; }
+  .floater{
+    position:absolute; font-size:.75rem; font-weight:800; color:var(--leaf);
+    pointer-events:none; animation:float-up .8s ease forwards;
+  }
+  @keyframes float-up{ from{ opacity:1; transform:translateY(0);} to{ opacity:0; transform:translateY(-30px);} }
+  .battle-msg{ margin-top:12px; font-size:.85rem; color:var(--ink-soft); text-align:center; }
+  .battle-actions{ display:flex; justify-content:center; margin-top:14px; }
+
+  /* ===== buttons ===== */
+  .btn{
+    font-family:'Tajawal',sans-serif; font-weight:700; border:none; cursor:pointer;
+    padding:11px 22px; border-radius:12px; font-size:.92rem; transition:.15s ease;
+  }
+  .btn-primary{ background:var(--ink); color:#fff; }
+  .btn-primary:hover{ background:#132a1f; }
+  .btn-primary:disabled{ background:#BFC9C1; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border:2px solid #E1EAD9; }
+  .btn-ghost:hover{ border-color:var(--leaf-light); }
+
+  /* ===== sections ===== */
+  section{ margin:52px auto; }
+  section > .wrap > h2{ font-size:1.8rem; margin-bottom:6px; text-align:center; }
+  section > .wrap > p.lead{ text-align:center; color:var(--ink-soft); max-width:520px; margin:0 auto 26px; }
+
+  /* info cards */
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px,1fr));
+    gap:16px;
+  }
+  .flip-card{ perspective:1200px; height:200px; }
+  .flip-inner{
+    position:relative; width:100%; height:100%; transition:transform .5s;
+    transform-style:preserve-3d; cursor:pointer;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:16px; padding:18px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .flip-front{ background:var(--panel); text-align:center; align-items:center; gap:8px; }
+  .flip-front .ico{ font-size:2rem; }
+  .flip-front h4{ font-family:'Markazi Text',serif; font-size:1.25rem; }
+  .flip-front .tap-hint{ font-size:.7rem; color:var(--ink-soft); }
+  .flip-back{
+    background:var(--leaf); color:#fff; transform:rotateY(180deg);
+    font-size:.85rem;
+  }
+  .flip-back b{ display:block; margin-bottom:6px; font-family:'Markazi Text',serif; font-size:1.05rem; }
+  .flip-back.berry{ background:var(--berry); }
+  .flip-back.gold{ background:#B9862F; }
+  .flip-back.calm{ background:var(--calm); }
+
+  /* scenario quiz */
+  .scenario-card{
+    background:var(--panel); border-radius:18px; box-shadow:var(--shadow);
+    padding:24px; margin-bottom:18px;
+  }
+  .scenario-card p.situation{ font-weight:700; margin-bottom:14px; }
+  .choices{ display:grid; gap:10px; }
+  .choice-btn{
+    display:flex; align-items:center; gap:10px;
+    background:var(--bg); border:2px solid #E7EEE1; border-radius:12px;
+    padding:12px 16px; font-family:'Tajawal',sans-serif; font-size:.95rem;
+    color:var(--ink); cursor:pointer; text-align:right; transition:.15s ease;
+  }
+  .choice-btn:hover{ border-color:var(--leaf-light); }
+  .choice-btn .mark{ font-weight:800; width:18px; }
+  .choice-btn.correct{ border-color:#5C8A4C; background:#EAF3E1; }
+  .choice-btn.wrong{ border-color:var(--radical); background:#FBE7DF; }
+  .choice-btn[disabled]{ cursor:default; }
+  .explain{
+    margin-top:12px; padding:10px 14px; border-radius:10px;
+    background:#F1F6EC; font-size:.85rem; color:var(--ink-soft); display:none;
+  }
+  .explain.show{ display:block; }
+
+  /* final quiz + completion */
+  .quiz-progress{ text-align:center; color:var(--ink-soft); font-size:.85rem; margin-bottom:10px; }
+  .done-wrap{ text-align:center; }
+  .medal{
+    width:88px; height:88px; border-radius:50%; margin:0 auto 16px;
+    background:conic-gradient(var(--leaf), var(--gold), var(--berry), var(--leaf));
+    display:flex; align-items:center; justify-content:center; font-size:2rem;
+    box-shadow:var(--shadow);
+  }
+  .score-line{ font-size:1.05rem; color:var(--ink-soft); margin-bottom:16px; }
+  .score-line b{ font-family:'Markazi Text',serif; font-size:1.5rem; color:var(--leaf); }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:.8rem; margin-top:50px; }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">محاكاة تفاعلية · تغذية وكيمياء حيوية</div>
+  <h1>مضادات الأكسدة</h1>
+  <p class="sub">جزيئات صغيرة تحمي خلاياك من التلف اليومي. عايِن كيف تعمل، تعرّف على مصادرها، ثم اختبر قدرتك على التعرّف عليها في مواقف الحياة الواقعية.</p>
+</header>
+
+<div class="battle-wrap wrap">
+  <div class="battle-head">
+    <h3>المعركة داخل الخلية</h3>
+    <div class="battle-stats">تم التعادل: <b id="neutCount">0</b> &nbsp;|&nbsp; جذور نشطة: <b id="activeCount">0</b></div>
+  </div>
+  <div class="battle-arena" id="arena">
+    <div class="cell-core" id="cellCore">خلية سليمة</div>
+  </div>
+  <p class="battle-msg" id="battleMsg">الجذور الحرة (الدوائر الحمراء الشائكة) تفقد إلكترونًا فتصبح غير مستقرة وتهاجم الخلية. اضغط عليها لتزويدها بإلكترون من مضاد الأكسدة وتحييدها قبل أن تتراكم.</p>
+  <div class="battle-actions">
+    <button class="btn btn-ghost" id="battleReset">إعادة تشغيل المحاكاة</button>
+  </div>
+</div>
+
+<section id="cardsSection">
+  <div class="wrap">
+    <h2>أنواع مضادات الأكسدة</h2>
+    <p class="lead">اضغط على أي بطاقة لتقلبها وتتعرف على مصادرها الغذائية ووظيفتها.</p>
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+</section>
+
+<section id="scenarioSection">
+  <div class="wrap">
+    <h2>أي مضاد أكسدة يناسب الموقف؟</h2>
+    <p class="lead">مواقف يومية تزيد الإجهاد التأكسدي — اختر الاستجابة الغذائية الأنسب.</p>
+    <div id="scenarioList"></div>
+  </div>
+</section>
+
+<section id="quizSection">
+  <div class="wrap" id="quizWrap"></div>
+</section>
+
+<footer>محاكاة تعليمية لأغراض التعلّم فقط · ليست بديلاً عن استشارة طبية أو غذائية متخصصة</footer>
+
+<script>
+(function(){
+
+  /* ============ BATTLE MINI-GAME ============ */
+  var arena = document.getElementById('arena');
+  var cellCore = document.getElementById('cellCore');
+  var neutCountEl = document.getElementById('neutCount');
+  var activeCountEl = document.getElementById('activeCount');
+  var battleMsg = document.getElementById('battleMsg');
+  var neutCount = 0, activeCount = 0, missedCount = 0, spawnTimer = null;
+  var running = true;
+
+  function randomEdgePosition(){
+    var angle = Math.random()*Math.PI*2;
+    var radius = 100 + Math.random()*15;
+    var cx = arena.clientWidth/2, cy = arena.clientHeight/2;
+    var x = cx + Math.cos(angle)*radius - 17;
+    var y = cy + Math.sin(angle)*radius - 17;
+    x = Math.max(4, Math.min(arena.clientWidth-38, x));
+    y = Math.max(4, Math.min(arena.clientHeight-38, y));
+    return {x:x, y:y};
+  }
+
+  function spawnRadical(){
+    if(!running) return;
+    var pos = randomEdgePosition();
+    var el = document.createElement('div');
+    el.className = 'radical';
+    el.style.left = pos.x+'px';
+    el.style.top = pos.y+'px';
+    arena.appendChild(el);
+    activeCount++;
+    updateStats();
+    var lifeTimer = setTimeout(function(){
+      if(el.parentNode && !el.classList.contains('neutralized')){
+        el.remove();
+        activeCount--;
+        missedCount++;
+        updateStats();
+        checkStress();
+      }
+    }, 4200);
+    el.addEventListener('click', function(){
+      if(el.classList.contains('neutralized')) return;
+      clearTimeout(lifeTimer);
+      el.classList.add('neutralized');
+      neutCount++; activeCount--;
+      updateStats();
+      var f = document.createElement('div');
+      f.className = 'floater';
+      f.textContent = '+ إلكترون';
+      f.style.left = el.style.left; f.style.top = el.style.top;
+      arena.appendChild(f);
+      setTimeout(function(){ f.remove(); }, 800);
+      setTimeout(function(){ el.remove(); }, 500);
+      checkStress();
+    });
+  }
+
+  function updateStats(){
+    neutCountEl.textContent = neutCount;
+    activeCountEl.textContent = Math.max(activeCount,0);
+  }
+
+  function checkStress(){
+    if(activeCount >= 5){
+      cellCore.classList.add('stressed');
+      cellCore.textContent = 'إجهاد تأكسدي!';
+      battleMsg.textContent = 'تراكمت الجذور الحرة أسرع مما تم تحييده — هذا ما يُسمى الإجهاد التأكسدي، وهو ما تعمل مضادات الأكسدة على منعه.';
+    } else {
+      cellCore.classList.remove('stressed');
+      cellCore.textContent = 'خلية سليمة';
+      if(activeCount < 5){
+        battleMsg.textContent = 'الجذور الحرة تفقد إلكترونًا فتصبح غير مستقرة. اضغط عليها لتزويدها بإلكترون وتحييدها قبل أن تتراكم.';
+      }
+    }
+  }
+
+  spawnTimer = setInterval(spawnRadical, 1100);
+
+  document.getElementById('battleReset').addEventListener('click', function(){
+    Array.from(arena.querySelectorAll('.radical, .floater')).forEach(el=>el.remove());
+    neutCount = 0; activeCount = 0; missedCount = 0;
+    cellCore.classList.remove('stressed');
+    cellCore.textContent = 'خلية سليمة';
+    battleMsg.textContent = 'الجذور الحرة (الدوائر الحمراء الشائكة) تفقد إلكترونًا فتصبح غير مستقرة وتهاجم الخلية. اضغط عليها لتزويدها بإلكترون من مضاد الأكسدة وتحييدها قبل أن تتراكم.';
+    updateStats();
+  });
+
+  /* ============ INFO CARDS ============ */
+  var antioxidants = [
+    {ico:'🍊', name:'فيتامين C', cls:'', text:'موجود في الحمضيات، الفليفلة الحمراء، الكيوي. يذوب في الماء ويحمي السوائل داخل الخلايا، ويجدّد فيتامين E بعد استخدامه.'},
+    {ico:'🌰', name:'فيتامين E', cls:'gold', text:'موجود في المكسرات، بذور دوار الشمس، زيوت النباتات. يذوب في الدهون فيحمي أغشية الخلايا الدهنية من التلف.'},
+    {ico:'🥕', name:'بيتا كاروتين', cls:'berry', text:'صبغة برتقالية موجودة في الجزر، البطاطا الحلوة، القرع. يتحول جزئيًا إلى فيتامين A، ويحمي الجلد والعين.'},
+    {ico:'🥜', name:'السيلينيوم', cls:'calm', text:'معدن نادر موجود في المكسرات البرازيلية، الأسماك، البيض. يدخل في تركيب إنزيمات تحيّد الجذور الحرة داخل الخلية.'},
+    {ico:'🫐', name:'البوليفينولات', cls:'', text:'مركّبات نباتية ملوّنة في التوت، الشاي الأخضر، العنب الأحمر، الكاكاو الداكن. تمنح الفواكه ألوانها وتحمي الأوعية الدموية.'},
+    {ico:'🍅', name:'الليكوبين', cls:'gold', text:'صبغة حمراء موجودة في الطماطم المطهوة، البطيخ، الجريب فروت الوردي. يرتبط بصحة القلب والحماية من أشعة الشمس.'}
+  ];
+  var grid = document.getElementById('cardGrid');
+  antioxidants.forEach(function(a){
+    var card = document.createElement('div');
+    card.className = 'flip-card';
+    card.innerHTML =
+      '<div class="flip-inner">'+
+        '<div class="flip-face flip-front"><div class="ico">'+a.ico+'</div><h4>'+a.name+'</h4><div class="tap-hint">اضغط للمزيد</div></div>'+
+        '<div class="flip-face flip-back '+a.cls+'"><b>'+a.name+'</b>'+a.text+'</div>'+
+      '</div>';
+    card.addEventListener('click', function(){ card.classList.toggle('flipped'); });
+    grid.appendChild(card);
+  });
+
+  /* ============ SCENARIO QUIZ ============ */
+  var scenarios = [
+    {
+      situation:'تدخّن السجائر بانتظام، ما يزيد الجذور الحرة في رئتيك ودمك بشكل كبير.',
+      options:['فيتامين C من الحمضيات والفليفلة','السكر المكرر','الدهون المشبعة فقط'],
+      correct:0,
+      explain:'التدخين يستهلك مخزون فيتامين C في الجسم بسرعة، لذا يحتاج المدخنون كمية أكبر منه من مصادر مثل الحمضيات والفليفلة.'
+    },
+    {
+      situation:'تتعرض لأشعة الشمس القوية لفترات طويلة، ما يرهق خلايا الجلد.',
+      options:['فيتامين B12 فقط','الليكوبين وفيتامين E','الملح'],
+      correct:1,
+      explain:'الليكوبين (من الطماطم) وفيتامين E (من المكسرات والزيوت) يساعدان في حماية خلايا الجلد من الأضرار الناتجة عن الأشعة فوق البنفسجية.'
+    },
+    {
+      situation:'تعيش في مدينة مزدحمة بتلوث هواء مرتفع.',
+      options:['البوليفينولات من الشاي الأخضر والتوت','الكافيين وحده','الألياف فقط دون غيرها'],
+      correct:0,
+      explain:'التلوث الجوي يزيد الإجهاد التأكسدي في الرئتين والأوعية الدموية، والبوليفينولات في الشاي الأخضر والتوت تساعد على مقاومة هذا التأثير.'
+    },
+    {
+      situation:'تمارس رياضة عالية الشدة بانتظام، ما ينتج طاقة إضافية وجذورًا حرة كأثر جانبي طبيعي.',
+      options:['تجنّب كل مضادات الأكسدة تمامًا','مزيج متنوع من الفواكه والخضروات الملوّنة','ملح الطعام فقط'],
+      correct:1,
+      explain:'النشاط الرياضي المكثف يرفع إنتاج الجذور الحرة بشكل طبيعي؛ تنوّع الفواكه والخضروات الملوّنة يوفر مزيجًا متكاملًا من مضادات الأكسدة يدعم التعافي.'
+    }
+  ];
+  var scenarioList = document.getElementById('scenarioList');
+  scenarios.forEach(function(sc){
+    var card = document.createElement('div');
+    card.className = 'scenario-card';
+    var optsHtml = '';
+    sc.options.forEach(function(opt, oi){
+      optsHtml += '<button class="choice-btn" data-oi="'+oi+'"><span class="mark"></span>'+opt+'</button>';
+    });
+    card.innerHTML =
+      '<p class="situation">'+sc.situation+'</p>'+
+      '<div class="choices">'+optsHtml+'</div>'+
+      '<div class="explain">'+sc.explain+'</div>';
+    var btns = card.querySelectorAll('.choice-btn');
+    var answered = false;
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(answered) return;
+        answered = true;
+        var oi = +btn.dataset.oi;
+        btns.forEach(b=>b.disabled = true);
+        if(oi === sc.correct){
+          btn.classList.add('correct');
+          btn.querySelector('.mark').textContent = '✓';
+        } else {
+          btn.classList.add('wrong');
+          btn.querySelector('.mark').textContent = '✕';
+          btns[sc.correct].classList.add('correct');
+          btns[sc.correct].querySelector('.mark').textContent = '✓';
+        }
+        card.querySelector('.explain').classList.add('show');
+      });
+    });
+    scenarioList.appendChild(card);
+  });
+
+  /* ============ FINAL KNOWLEDGE QUIZ ============ */
+  var quiz = [
+    {q:'ما هو الجذر الحر (Free radical) من الناحية الكيميائية؟', options:['جزيء فقد إلكترونًا فأصبح غير مستقر','فيتامين قوي جدًا','نوع من البروتين'], correct:0},
+    {q:'ما وظيفة مضاد الأكسدة الأساسية؟', options:['رفع درجة الحرارة','منح الجذر الحر إلكترونًا لتحييده دون أن يصبح هو نفسه غير مستقر','تسريع الهضم فقط'], correct:1},
+    {q:'أي من هذه ليس مصدرًا طبيعيًا لمضادات الأكسدة؟', options:['التوت والعنب الأحمر','المشروبات الغازية السكرية','الشاي الأخضر'], correct:1},
+    {q:'ماذا يحدث عند تراكم الجذور الحرة دون تحييد كافٍ؟', options:['يتحسن أداء الخلايا','لا يحدث أي تأثير','إجهاد تأكسدي قد يضر الخلايا مع الوقت'], correct:2},
+    {q:'لماذا يُنصح بتناول ألوان متنوعة من الخضار والفواكه؟', options:['لأن كل لون غالبًا يشير إلى مركّبات مضادة للأكسدة مختلفة', 'لأن الألوان تزيد السعرات الحرارية فقط', 'لا علاقة للون بالتغذية'], correct:0}
+  ];
+  var qi = 0, qScore = 0;
+  var quizWrap = document.getElementById('quizWrap');
+
+  function renderQuiz(){
+    if(qi >= quiz.length){ renderCompletion(); return; }
+    var item = quiz[qi];
+    var html = '<h2 style="text-align:center;">اختبر معرفتك</h2>';
+    html += '<p class="quiz-progress">سؤال '+(qi+1)+' من '+quiz.length+'</p>';
+    html += '<div class="scenario-card"><p class="situation">'+item.q+'</p><div class="choices" id="quizChoices">';
+    item.options.forEach(function(opt, oi){
+      html += '<button class="choice-btn" data-oi="'+oi+'"><span class="mark"></span>'+opt+'</button>';
+    });
+    html += '</div></div>';
+    quizWrap.innerHTML = html;
+    var btns = quizWrap.querySelectorAll('.choice-btn');
+    var answered = false;
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(answered) return;
+        answered = true;
+        var oi = +btn.dataset.oi;
+        btns.forEach(b=>b.disabled = true);
+        if(oi === item.correct){
+          btn.classList.add('correct'); btn.querySelector('.mark').textContent='✓';
+          qScore++;
+        } else {
+          btn.classList.add('wrong'); btn.querySelector('.mark').textContent='✕';
+          btns[item.correct].classList.add('correct');
+          btns[item.correct].querySelector('.mark').textContent='✓';
+        }
+        setTimeout(function(){ qi++; renderQuiz(); }, 1100);
+      });
+    });
+  }
+
+  function renderCompletion(){
+    running = false;
+    clearInterval(spawnTimer);
+    var pct = Math.round((qScore/quiz.length)*100);
+    var msg = pct>=80 ? 'فهم ممتاز لآلية عمل مضادات الأكسدة!' :
+              pct>=50 ? 'أساس جيد، راجع البطاقات أعلاه لتثبيت المعلومة.' :
+              'أعد قراءة البطاقات والمواقف أعلاه ثم حاول من جديد.';
+    var html = '<div class="done-wrap">';
+    html += '<div class="medal">🛡️</div>';
+    html += '<h2>أتممت المحاكاة</h2>';
+    html += '<p class="score-line">نتيجتك في الاختبار: <b>'+qScore+' / '+quiz.length+'</b> ('+pct+'٪)</p>';
+    html += '<p style="color:var(--ink-soft); max-width:480px; margin:0 auto 20px;">'+msg+'</p>';
+    html += '<button class="btn btn-ghost" id="restartQuiz">إعادة الاختبار</button>';
+    html += '</div>';
+    quizWrap.innerHTML = html;
+    document.getElementById('restartQuiz').addEventListener('click', function(){
+      qi = 0; qScore = 0; renderQuiz();
+    });
+  }
+
+  renderQuiz();
+
+})();
+</script>
+</body>
+</html>
