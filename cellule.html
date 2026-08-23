@@ -1,0 +1,669 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الخلية الإنسانية | محاكاة تفاعلية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080b13;
+    --bg-2:#0d121e;
+    --panel:#10182580;
+    --line:#1c2536;
+    --nucleus:#8b8bff;
+    --nucleus-glow:#a5a5ff;
+    --membrane:#ff6ec7;
+    --mito:#ffb454;
+    --rer:#5be3a3;
+    --ser:#3fc9d9;
+    --golgi:#ffd166;
+    --lyso:#ff7a7a;
+    --ribo:#e8e8ff;
+    --ink:#eef1fb;
+    --ink-dim:#8d97b3;
+    --ink-faint:#576079;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 20% -10%, #131c2e 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 20%, #1a1030 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Tajawal', sans-serif;
+    min-height:100vh;
+    line-height:1.6;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; direction:ltr; unicode-bidi:isolate; letter-spacing:0.02em; }
+  ::selection{ background:var(--nucleus); color:#0a0a12; }
+
+  a{color:inherit;}
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 28px; }
+
+  /* ---------- top HUD bar ---------- */
+  .hud{
+    border-bottom:1px solid var(--line);
+    background:#070a11cc;
+    backdrop-filter: blur(6px);
+    position:sticky; top:0; z-index:40;
+  }
+  .hud-inner{
+    max-width:1180px; margin:0 auto; padding:14px 28px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap;
+  }
+  .hud-brand{ display:flex; align-items:center; gap:10px; }
+  .hud-dot{ width:9px; height:9px; border-radius:50%; background:var(--mito); box-shadow:0 0 10px var(--mito); animation:blink 2.4s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  .hud-title{ font-weight:700; font-size:15px; letter-spacing:0.02em; }
+  .hud-stats{ display:flex; gap:22px; font-size:12px; color:var(--ink-dim); }
+  .hud-stats b{ color:var(--ink); font-weight:600; }
+
+  /* ---------- hero / scope viewport ---------- */
+  .hero{ padding:56px 0 20px; position:relative; }
+  .eyebrow{
+    font-size:12px; color:var(--mito); font-weight:700;
+    letter-spacing:.08em; margin-bottom:14px; display:block;
+  }
+  h1{
+    font-size:clamp(30px,4.4vw,50px); font-weight:900; line-height:1.15;
+    max-width:820px; margin-bottom:14px;
+  }
+  h1 span{ color:var(--nucleus-glow); }
+  .lede{ color:var(--ink-dim); max-width:640px; font-size:16px; margin-bottom:38px; }
+
+  .scope{
+    position:relative;
+    width:100%;
+    aspect-ratio: 16/10;
+    max-height:640px;
+    border-radius:24px;
+    border:1px solid var(--line);
+    background:
+      radial-gradient(ellipse at center, #0f1a2b 0%, #05070d 78%);
+    overflow:hidden;
+    box-shadow: 0 30px 80px -30px #000c;
+  }
+  .scope-vignette{
+    position:absolute; inset:0; pointer-events:none; z-index:5;
+    background: radial-gradient(ellipse 78% 78% at 50% 50%, transparent 55%, #05070d 100%);
+  }
+  .scope-grain{
+    position:absolute; inset:0; pointer-events:none; z-index:6; opacity:.05; mix-blend-mode:overlay;
+    background-image: radial-gradient(#fff 0.6px, transparent 0.6px);
+    background-size: 3px 3px;
+  }
+  .scope-crosshair{
+    position:absolute; inset:0; pointer-events:none; z-index:4; opacity:.35;
+  }
+  .scope-crosshair::before, .scope-crosshair::after{
+    content:''; position:absolute; background:#5be3a333;
+  }
+  .scope-crosshair::before{ left:0; right:0; top:50%; height:1px; }
+  .scope-crosshair::after{ top:0; bottom:0; left:50%; width:1px; }
+
+  .cell-stage{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    transition: filter .25s ease;
+  }
+  .cell-stage svg{ width:min(88%,640px); height:auto; overflow:visible; }
+
+  .hotspots{ position:absolute; inset:0; z-index:8; transition:opacity .3s ease; }
+  .hotspot{
+    position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px;
+    border-radius:50%; cursor:pointer; border:none; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .hotspot::before{
+    content:''; width:9px; height:9px; border-radius:50%;
+    background: var(--dot,#fff); box-shadow:0 0 0 0 var(--dot,#fff);
+    animation: pulse-ring 2.2s ease-out infinite;
+  }
+  .hotspot:hover::before, .hotspot.active::before{ animation: none; box-shadow:0 0 14px var(--dot,#fff); }
+  @keyframes pulse-ring{
+    0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--dot) 55%, transparent); }
+    70%{ box-shadow:0 0 0 14px transparent; }
+    100%{ box-shadow:0 0 0 0 transparent; }
+  }
+  .hotspot.active{ transform:scale(1.15); }
+
+  .scope-readout{
+    position:absolute; z-index:9; font-size:11px; color:#7fffb0cc;
+    background:#04070ccc; border:1px solid #1c3a2c; border-radius:6px; padding:5px 9px;
+    pointer-events:none;
+  }
+  .ro-tl{ top:14px; right:14px; text-align:right; }
+  .ro-br{ bottom:14px; left:14px; }
+
+  .focus-rail{
+    position:absolute; bottom:16px; right:16px; left:16px; z-index:9;
+    display:flex; align-items:center; gap:12px;
+    background:#050810cc; border:1px solid var(--line); border-radius:12px;
+    padding:10px 16px; backdrop-filter:blur(4px);
+  }
+  .focus-rail label{ font-size:12px; color:var(--ink-dim); white-space:nowrap; }
+  .focus-rail input[type=range]{
+    flex:1; -webkit-appearance:none; height:3px; border-radius:3px;
+    background:linear-gradient(90deg,var(--rer),var(--nucleus));
+    outline:none;
+  }
+  .focus-rail input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:#fff; border:3px solid var(--nucleus); cursor:pointer;
+  }
+  .focus-val{ font-size:12px; color:var(--ink); min-width:52px; text-align:left; }
+
+  .hint{
+    text-align:center; color:var(--ink-faint); font-size:12.5px; margin-top:14px;
+  }
+
+  /* ---------- section headers ---------- */
+  section{ padding:70px 0; }
+  .sec-head{ margin-bottom:34px; max-width:640px; }
+  .sec-eyebrow{ font-size:12px; color:var(--rer); font-weight:700; letter-spacing:.08em; display:block; margin-bottom:10px; }
+  .sec-title{ font-size:clamp(22px,3vw,32px); font-weight:800; margin-bottom:10px; }
+  .sec-sub{ color:var(--ink-dim); font-size:15px; }
+
+  /* ---------- organelle info panel ---------- */
+  .info-panel{
+    border:1px solid var(--line); border-radius:16px; padding:26px;
+    background:linear-gradient(180deg,#0d1420,#0a0f18);
+    display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:flex-start;
+    margin-bottom:40px;
+  }
+  .info-swatch{
+    width:52px; height:52px; border-radius:14px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 0 0 1px #ffffff22;
+  }
+  .info-name{ font-size:20px; font-weight:800; margin-bottom:4px; }
+  .info-name .mono{ font-size:12px; color:var(--ink-faint); display:block; margin-top:2px; }
+  .info-func{ color:var(--ink-dim); font-size:14.5px; margin-top:8px; }
+  .info-tag{
+    display:inline-block; font-size:11px; color:var(--ink-dim);
+    border:1px solid var(--line); border-radius:20px; padding:3px 10px; margin-top:12px;
+  }
+
+  /* ---------- organelle gallery ---------- */
+  .gallery{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;
+  }
+  .org-card{
+    border:1px solid var(--line); border-radius:14px; padding:18px;
+    background:#0b1119; cursor:pointer; text-align:right;
+    transition:border-color .2s, transform .2s, background .2s;
+  }
+  .org-card:hover{ transform:translateY(-3px); border-color:#2c3a54; background:#0d1420; }
+  .org-card.active{ border-color:var(--dot); background:#0d1723; }
+  .org-dot{ width:12px; height:12px; border-radius:50%; background:var(--dot); margin-bottom:12px; box-shadow:0 0 10px var(--dot); }
+  .org-card h3{ font-size:15px; margin-bottom:6px; }
+  .org-card p{ font-size:12.5px; color:var(--ink-dim); }
+
+  /* ---------- quiz ---------- */
+  .quiz-box{
+    border:1px solid var(--line); border-radius:18px; padding:30px;
+    background:linear-gradient(180deg,#0d1420,#0a0f18);
+  }
+  .quiz-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;}
+  .quiz-progress{ font-size:12.5px; color:var(--ink-dim); }
+  .quiz-score{ font-size:12.5px; color:var(--rer); }
+  .quiz-q{ font-size:18px; font-weight:700; margin-bottom:20px; min-height:52px; }
+  .quiz-opts{ display:grid; gap:10px; margin-bottom:18px; }
+  .quiz-opt{
+    text-align:right; padding:14px 16px; border-radius:10px; border:1px solid var(--line);
+    background:#0b1119; color:var(--ink); font-family:inherit; font-size:14.5px; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .quiz-opt:hover{ border-color:#334160; }
+  .quiz-opt.correct{ border-color:var(--rer); background:#0f2a20; }
+  .quiz-opt.wrong{ border-color:var(--lyso); background:#2a1414; }
+  .quiz-opt:disabled{ cursor:default; }
+  .quiz-feedback{ font-size:13.5px; color:var(--ink-dim); min-height:20px; margin-bottom:14px; }
+  .quiz-next{
+    background:var(--nucleus); color:#0a0a12; border:none; padding:11px 22px;
+    border-radius:10px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer;
+    display:none;
+  }
+  .quiz-next.show{ display:inline-block; }
+  .quiz-done{ text-align:center; padding:20px 0; display:none; }
+  .quiz-done.show{ display:block; }
+  .quiz-done .big{ font-size:38px; font-weight:900; color:var(--nucleus-glow); margin-bottom:8px; }
+  .quiz-restart{
+    margin-top:16px; background:transparent; border:1px solid var(--line); color:var(--ink);
+    padding:10px 20px; border-radius:10px; font-family:inherit; cursor:pointer; font-size:13.5px;
+  }
+
+  footer{ border-top:1px solid var(--line); padding:30px 0; text-align:center; color:var(--ink-faint); font-size:12.5px; }
+
+  @media (max-width:640px){
+    .info-panel{ grid-template-columns:1fr; }
+    .hud-stats{ display:none; }
+    .focus-rail{ flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="hud">
+    <div class="hud-inner">
+      <div class="hud-brand">
+        <span class="hud-dot"></span>
+        <span class="hud-title">مِجهر الخلية</span>
+      </div>
+      <div class="hud-stats mono">
+        <span>MODE: <b>FLUORESCENCE</b></span>
+        <span>MAG: <b>×2400</b></span>
+        <span>SPECIMEN: <b>HUMAN CELL</b></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap hero">
+    <span class="eyebrow">محاكاة تفاعلية · الأحياء الخلوية</span>
+    <h1>رحلة داخل <span>الخلية الإنسانية</span></h1>
+    <p class="lede">
+      عدّل بؤرة المجهر لتكشف تدريجياً عن مكونات الخلية، ثم انقر على أي نقطة مضيئة
+      لتتعرّف على العضية ووظيفتها داخل هذا العالم المجهري الحي.
+    </p>
+
+    <div class="scope" id="scope">
+      <div class="scope-crosshair"></div>
+      <div class="cell-stage" id="cellStage">
+        <!-- ===================== CELL SVG ===================== -->
+        <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="7" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <radialGradient id="cytoGrad" cx="45%" cy="40%" r="75%">
+              <stop offset="0%" stop-color="#131f30"/>
+              <stop offset="100%" stop-color="#0a1119"/>
+            </radialGradient>
+            <radialGradient id="nucGrad" cx="40%" cy="35%" r="70%">
+              <stop offset="0%" stop-color="#c2c2ff"/>
+              <stop offset="100%" stop-color="#6b6bdb"/>
+            </radialGradient>
+          </defs>
+
+          <!-- membrane -->
+          <path id="org-membrane" d="M120,300 C120,180 210,90 340,80 C450,72 520,50 610,95
+            C700,140 730,230 705,320 C685,395 720,440 660,500
+            C600,555 470,545 390,530 C280,510 210,500 165,440
+            C115,375 120,340 120,300 Z"
+            fill="url(#cytoGrad)" stroke="var(--membrane)" stroke-width="4" filter="url(#glow)" opacity="0.95"/>
+
+          <!-- rough ER -->
+          <g id="org-rer" filter="url(#glow)">
+            <path d="M460,190 C500,175 520,200 500,225 C480,250 510,265 545,255
+                     C575,247 590,270 565,290 C540,308 560,330 590,320"
+              fill="none" stroke="var(--rer)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="470" cy="188" r="3" fill="var(--ribo)"/>
+            <circle cx="495" cy="205" r="3" fill="var(--ribo)"/>
+            <circle cx="512" cy="228" r="3" fill="var(--ribo)"/>
+            <circle cx="535" cy="252" r="3" fill="var(--ribo)"/>
+            <circle cx="558" cy="270" r="3" fill="var(--ribo)"/>
+            <circle cx="578" cy="292" r="3" fill="var(--ribo)"/>
+          </g>
+
+          <!-- smooth ER -->
+          <g id="org-ser" filter="url(#glow)">
+            <path d="M460,340 C500,330 520,352 500,372 C480,392 505,410 540,400 C570,392 585,412 560,428"
+              fill="none" stroke="var(--ser)" stroke-width="4" stroke-linecap="round"/>
+          </g>
+
+          <!-- golgi apparatus -->
+          <g id="org-golgi" filter="url(#glow)">
+            <path d="M230,430 q60,-18 120,0" fill="none" stroke="var(--golgi)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M238,443 q52,-16 104,0" fill="none" stroke="var(--golgi)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M246,456 q44,-14 88,0" fill="none" stroke="var(--golgi)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M254,469 q36,-12 72,0" fill="none" stroke="var(--golgi)" stroke-width="4" stroke-linecap="round"/>
+          </g>
+
+          <!-- mitochondria -->
+          <g id="org-mito" filter="url(#glow)">
+            <g transform="translate(560,175) rotate(-20)">
+              <ellipse cx="0" cy="0" rx="34" ry="19" fill="#2a1a0e" stroke="var(--mito)" stroke-width="3.5"/>
+              <path d="M-20,-6 Q-12,4 -4,-6 M-2,-6 Q6,4 14,-6" fill="none" stroke="var(--mito)" stroke-width="2" opacity=".8"/>
+            </g>
+            <g transform="translate(600,330) rotate(15)">
+              <ellipse cx="0" cy="0" rx="30" ry="17" fill="#2a1a0e" stroke="var(--mito)" stroke-width="3.5"/>
+              <path d="M-17,-5 Q-10,4 -3,-5 M-1,-5 Q6,4 13,-5" fill="none" stroke="var(--mito)" stroke-width="2" opacity=".8"/>
+            </g>
+            <g transform="translate(500,440) rotate(-8)">
+              <ellipse cx="0" cy="0" rx="28" ry="16" fill="#2a1a0e" stroke="var(--mito)" stroke-width="3.5"/>
+              <path d="M-16,-5 Q-9,4 -2,-5 M0,-5 Q6,4 12,-5" fill="none" stroke="var(--mito)" stroke-width="2" opacity=".8"/>
+            </g>
+          </g>
+
+          <!-- lysosomes -->
+          <g id="org-lyso" filter="url(#glow)">
+            <circle cx="220" cy="245" r="13" fill="#2a1414" stroke="var(--lyso)" stroke-width="3"/>
+            <circle cx="195" cy="330" r="10" fill="#2a1414" stroke="var(--lyso)" stroke-width="3"/>
+            <circle cx="235" cy="380" r="11" fill="#2a1414" stroke="var(--lyso)" stroke-width="3"/>
+          </g>
+
+          <!-- free ribosomes -->
+          <g id="org-ribo" filter="url(#glow)">
+            <circle cx="330" cy="440" r="3.4" fill="var(--ribo)"/>
+            <circle cx="360" cy="460" r="3.4" fill="var(--ribo)"/>
+            <circle cx="290" cy="180" r="3.4" fill="var(--ribo)"/>
+            <circle cx="640" cy="240" r="3.4" fill="var(--ribo)"/>
+            <circle cx="650" cy="400" r="3.4" fill="var(--ribo)"/>
+            <circle cx="400" cy="470" r="3.4" fill="var(--ribo)"/>
+          </g>
+
+          <!-- nucleus -->
+          <g id="org-nucleus" filter="url(#glow)">
+            <circle cx="300" cy="270" r="95" fill="url(#nucGrad)" stroke="var(--nucleus)" stroke-width="4" opacity="0.92"/>
+            <circle id="org-nucleolus" cx="278" cy="250" r="26" fill="#4c4cc9" stroke="#d4d4ff" stroke-width="2.5"/>
+          </g>
+
+          <!-- cytoplasm label anchor (invisible, for hotspot only) -->
+        </svg>
+      </div>
+      <div class="scope-vignette"></div>
+      <div class="scope-grain"></div>
+
+      <div class="hotspots" id="hotspots">
+        <button class="hotspot" style="--dot:var(--nucleus); top:37%; right:63%;" data-org="nucleus" aria-label="النواة"></button>
+        <button class="hotspot" style="--dot:#d4d4ff; top:33%; right:66%;" data-org="nucleolus" aria-label="النوية"></button>
+        <button class="hotspot" style="--dot:var(--mito); top:29%; right:29%;" data-org="mito" aria-label="الميتوكوندريا"></button>
+        <button class="hotspot" style="--dot:var(--rer); top:36%; right:35%;" data-org="rer" aria-label="الشبكة الإندوبلازمية الخشنة"></button>
+        <button class="hotspot" style="--dot:var(--ser); top:58%; right:32%;" data-org="ser" aria-label="الشبكة الإندوبلازمية الملساء"></button>
+        <button class="hotspot" style="--dot:var(--golgi); top:73%; right:56%;" data-org="golgi" aria-label="جهاز غولجي"></button>
+        <button class="hotspot" style="--dot:var(--lyso); top:41%; right:72%;" data-org="lyso" aria-label="الليزوزومات"></button>
+        <button class="hotspot" style="--dot:var(--ribo); top:74%; right:52%;" data-org="ribo" aria-label="الريبوسومات الحرة"></button>
+        <button class="hotspot" style="--dot:var(--membrane); top:15%; right:48%;" data-org="membrane" aria-label="الغشاء الخلوي"></button>
+        <button class="hotspot" style="--dot:#3a4664; top:20%; right:20%;" data-org="cyto" aria-label="السيتوبلازم"></button>
+      </div>
+
+      <div class="scope-readout ro-tl mono" id="readoutTL">FOCUS: 80%</div>
+      <div class="scope-readout ro-br mono" id="readoutBR">SPECIMEN: LIVE</div>
+
+      <div class="focus-rail">
+        <label for="focusSlider">🔬 بؤرة المجهر</label>
+        <input type="range" id="focusSlider" min="15" max="100" value="80">
+        <span class="focus-val mono" id="focusVal">80%</span>
+      </div>
+    </div>
+    <p class="hint">اسحب مؤشر البؤرة لتوضيح الصورة، وانقر فوق أي نقطة نابضة لعرض تفاصيل العضية.</p>
+  </div>
+
+  <section class="wrap" id="infoSection">
+    <div class="sec-head">
+      <span class="sec-eyebrow">البطاقة التعريفية</span>
+      <h2 class="sec-title">تفاصيل العضية المختارة</h2>
+      <p class="sec-sub">انقر على أي عضية في المجهر أعلاه، أو في المعرض أسفله، لعرض وظيفتها هنا.</p>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <div class="info-swatch" id="infoSwatch" style="background:#3a466422;">🔎</div>
+      <div>
+        <div class="info-name">اختر عضية لعرض تفاصيلها<span class="mono" id="infoEn"></span></div>
+        <p class="info-func" id="infoFunc">استخدم المجهر أعلاه أو البطاقات في القسم التالي لبدء الاستكشاف.</p>
+        <span class="info-tag" id="infoTag" style="display:none;"></span>
+      </div>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="wrap">
+    <div class="sec-head">
+      <span class="sec-eyebrow">اختبر معلوماتك</span>
+      <h2 class="sec-title">مَن أنا داخل الخلية؟</h2>
+      <p class="sec-sub">مواقف قصيرة عن نشاط داخل الخلية — خمّن العضية المسؤولة عن كل مهمة.</p>
+    </div>
+
+    <div class="quiz-box">
+      <div class="quiz-top">
+        <span class="quiz-progress mono" id="quizProgress">سؤال 1 / 8</span>
+        <span class="quiz-score mono" id="quizScore">النقاط: 0</span>
+      </div>
+      <div class="quiz-q" id="quizQ"></div>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <button class="quiz-next" id="quizNext">السؤال التالي ←</button>
+
+      <div class="quiz-done" id="quizDone">
+        <div class="big mono" id="quizFinalScore">0/8</div>
+        <p>نتيجتك في اختبار مكونات الخلية</p>
+        <button class="quiz-restart" id="quizRestart">إعادة الاختبار</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">محاكاة تعليمية تفاعلية — الخلية الإنسانية</footer>
+
+<script>
+(function(){
+
+  const ORGANELLES = {
+    nucleus:{ name:'النواة', en:'Nucleus', color:'var(--nucleus)', icon:'🧬',
+      func:'المركز القيادي للخلية، تحتوي على الحمض النووي (DNA) وتتحكم في كل نشاطاتها الحيوية، وتوجّه عملية بناء البروتينات.',
+      tag:'محاطة بغلاف نووي مزدوج' },
+    nucleolus:{ name:'النوية', en:'Nucleolus', color:'#d4d4ff', icon:'⚪',
+      func:'جسم كثيف داخل النواة متخصص في تصنيع مكونات الريبوسومات قبل إرسالها إلى السيتوبلازم.',
+      tag:'داخل النواة' },
+    mito:{ name:'الميتوكوندريا', en:'Mitochondria', color:'var(--mito)', icon:'🔋',
+      func:'موقع التنفس الخلوي، حيث تتحول المغذيات إلى طاقة قابلة للاستخدام على شكل ATP.',
+      tag:'تملك DNA خاصاً بها' },
+    rer:{ name:'الشبكة الإندوبلازمية الخشنة', en:'Rough ER', color:'var(--rer)', icon:'🧵',
+      func:'شبكة أنابيب مغطاة بالريبوسومات، مسؤولة عن تصنيع وتعديل البروتينات الموجهة للإفراز أو الأغشية.',
+      tag:'مرتبطة بالريبوسومات' },
+    ser:{ name:'الشبكة الإندوبلازمية الملساء', en:'Smooth ER', color:'var(--ser)', icon:'💧',
+      func:'تمتد من الشبكة الخشنة لكنها خالية من الريبوسومات، وتختص بتصنيع الدهون واستقلاب بعض المواد وتخزين الكالسيوم.',
+      tag:'خالية من الريبوسومات' },
+    golgi:{ name:'جهاز غولجي', en:'Golgi Apparatus', color:'var(--golgi)', icon:'📦',
+      func:'يستقبل البروتينات من الشبكة الإندوبلازمية، يعدّلها ويعبّئها في حويصلات، ثم يوجّهها إلى وجهتها النهائية داخل الخلية أو خارجها.',
+      tag:'مركز الفرز والتعبئة' },
+    lyso:{ name:'الليزوزومات', en:'Lysosomes', color:'var(--lyso)', icon:'♻️',
+      func:'حويصلات تحتوي إنزيمات هاضمة، تفكك الفضلات الخلوية والجزيئات الكبيرة والعضيات التالفة.',
+      tag:'نظام إعادة التدوير الخلوي' },
+    ribo:{ name:'الريبوسومات الحرة', en:'Free Ribosomes', color:'var(--ribo)', icon:'⚙️',
+      func:'جسيمات دقيقة عائمة في السيتوبلازم تصنّع البروتينات التي تُستخدم داخل الخلية نفسها.',
+      tag:'مصانع البروتين' },
+    membrane:{ name:'الغشاء الخلوي', en:'Cell Membrane', color:'var(--membrane)', icon:'🛡️',
+      func:'غلاف مرن شبه منفذ يحيط بالخلية، ينظّم دخول وخروج المواد ويحمي محتوياتها الداخلية.',
+      tag:'نفاذية اختيارية' },
+    cyto:{ name:'السيتوبلازم', en:'Cytoplasm', color:'#3a4664', icon:'🌊',
+      func:'الوسط الهلامي الذي يملأ الخلية وتسبح فيه جميع العضيات، ويكون مسرحاً لكثير من التفاعلات الكيميائية.',
+      tag:'يشغل معظم حجم الخلية' },
+  };
+
+  const stage = document.getElementById('cellStage');
+  const svgGroups = {
+    nucleus: document.getElementById('org-nucleus'),
+    nucleolus: document.getElementById('org-nucleolus'),
+    mito: document.getElementById('org-mito'),
+    rer: document.getElementById('org-rer'),
+    ser: document.getElementById('org-ser'),
+    golgi: document.getElementById('org-golgi'),
+    lyso: document.getElementById('org-lyso'),
+    ribo: document.getElementById('org-ribo'),
+    membrane: document.getElementById('org-membrane'),
+  };
+
+  const infoSwatch = document.getElementById('infoSwatch');
+  const infoName = document.querySelector('.info-name');
+  const infoEn = document.getElementById('infoEn');
+  const infoFunc = document.getElementById('infoFunc');
+  const infoTag = document.getElementById('infoTag');
+  const gallery = document.getElementById('gallery');
+
+  let activeId = null;
+
+  function clearHighlights(){
+    Object.values(svgGroups).forEach(el=>{ if(el) el.style.opacity=''; });
+    document.querySelectorAll('.hotspot.active').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.org-card.active').forEach(c=>c.classList.remove('active'));
+  }
+
+  function selectOrganelle(id){
+    const data = ORGANELLES[id];
+    if(!data) return;
+    activeId = id;
+    clearHighlights();
+
+    // dim everything except selected group (if it has a distinct svg group)
+    const target = svgGroups[id];
+    if(target){
+      Object.entries(svgGroups).forEach(([k,el])=>{
+        if(el) el.style.opacity = (k===id) ? '1' : '0.28';
+      });
+    }
+
+    document.querySelectorAll('.hotspot').forEach(b=>{
+      if(b.dataset.org===id) b.classList.add('active');
+    });
+    document.querySelectorAll('.org-card').forEach(c=>{
+      if(c.dataset.org===id) c.classList.add('active');
+    });
+
+    infoSwatch.textContent = data.icon;
+    infoSwatch.style.background = data.color + '22';
+    infoSwatch.style.color = data.color;
+    infoName.childNodes[0].nodeValue = data.name + ' ';
+    infoEn.textContent = data.en;
+    infoFunc.textContent = data.func;
+    infoTag.textContent = data.tag;
+    infoTag.style.display = 'inline-block';
+    infoTag.style.borderColor = data.color + '55';
+    infoTag.style.color = data.color;
+
+    document.getElementById('infoSection').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  document.querySelectorAll('.hotspot').forEach(btn=>{
+    btn.addEventListener('click', ()=> selectOrganelle(btn.dataset.org));
+  });
+
+  // build gallery
+  Object.entries(ORGANELLES).forEach(([id,data])=>{
+    const card = document.createElement('div');
+    card.className='org-card';
+    card.dataset.org=id;
+    card.innerHTML = `<div class="org-dot" style="--dot:${data.color}; background:${data.color}; box-shadow:0 0 10px ${data.color};"></div>
+      <h3>${data.name}</h3><p>${data.func.slice(0,58)}…</p>`;
+    card.addEventListener('click', ()=> selectOrganelle(id));
+    gallery.appendChild(card);
+  });
+
+  // ---------- focus slider ----------
+  const slider = document.getElementById('focusSlider');
+  const focusVal = document.getElementById('focusVal');
+  const readoutTL = document.getElementById('readoutTL');
+  const hotspots = document.getElementById('hotspots');
+
+  function applyFocus(v){
+    const focus = Number(v);
+    const blur = (100-focus)/100 * 9;
+    const bright = 0.55 + (focus/100)*0.55;
+    stage.style.filter = `blur(${blur}px) brightness(${bright})`;
+    hotspots.style.opacity = focus < 40 ? 0.15 : (0.4 + (focus/100)*0.6);
+    hotspots.style.pointerEvents = focus < 40 ? 'none' : 'auto';
+    focusVal.textContent = focus + '%';
+    readoutTL.textContent = 'FOCUS: ' + focus + '%';
+  }
+  slider.addEventListener('input', e=> applyFocus(e.target.value));
+  applyFocus(slider.value);
+
+  // ================= QUIZ =================
+  const QUESTIONS = [
+    { q:'خلية عضلية تحتاج طاقة كبيرة باستمرار للانقباض — أي عضية تتكاثر بكثرة فيها؟',
+      opts:['الميتوكوندريا','جهاز غولجي','الليزوزوم'], a:0 },
+    { q:'خلية بيضاء تلتهم بكتيريا غازية وتحتاج لتفكيكها وهضمها — من يقوم بالمهمة؟',
+      opts:['النوية','الليزوزوم','الشبكة الملساء'], a:1 },
+    { q:'خلية غدية تفرز كميات كبيرة من الإنزيمات إلى خارج الجسم — أي عضيتين تعملان معاً لإنتاج وتعبئة هذه البروتينات؟',
+      opts:['النواة والغشاء','الشبكة الخشنة وجهاز غولجي','الميتوكوندريا والليزوزوم'], a:1 },
+    { q:'خلية كبد تحتاج إلى تفكيك سموم دهنية وتصنيع دهون جديدة — أي عضية مختصة بذلك؟',
+      opts:['الشبكة الإندوبلازمية الملساء','الريبوسومات الحرة','النوية'], a:0 },
+    { q:'أين تُخزَّن المعلومات الوراثية التي توجّه جميع أنشطة الخلية؟',
+      opts:['السيتوبلازم','النواة','جهاز غولجي'], a:1 },
+    { q:'ما الذي يتحكم في المواد الداخلة والخارجة من الخلية؟',
+      opts:['الغشاء الخلوي','النوية','الميتوكوندريا'], a:0 },
+    { q:'عضيات صغيرة عائمة بحرية في السيتوبلازم تصنّع البروتينات للاستخدام الداخلي فقط — ما اسمها؟',
+      opts:['الريبوسومات الحرة','الليزوزومات','جهاز غولجي'], a:0 },
+    { q:'أين تصنَّع مكونات الريبوسومات قبل خروجها من النواة؟',
+      opts:['النوية','الشبكة الملساء','الغشاء الخلوي'], a:0 },
+  ];
+
+  let qIndex=0, score=0;
+  const quizQ=document.getElementById('quizQ');
+  const quizOpts=document.getElementById('quizOpts');
+  const quizFeedback=document.getElementById('quizFeedback');
+  const quizNext=document.getElementById('quizNext');
+  const quizProgress=document.getElementById('quizProgress');
+  const quizScore=document.getElementById('quizScore');
+  const quizDone=document.getElementById('quizDone');
+  const quizBoxTop=document.querySelector('.quiz-top');
+
+  function renderQuestion(){
+    const item = QUESTIONS[qIndex];
+    quizQ.textContent = item.q;
+    quizOpts.innerHTML='';
+    quizFeedback.textContent='';
+    quizNext.classList.remove('show');
+    quizProgress.textContent = `سؤال ${qIndex+1} / ${QUESTIONS.length}`;
+    quizScore.textContent = `النقاط: ${score}`;
+
+    item.opts.forEach((opt,i)=>{
+      const btn=document.createElement('button');
+      btn.className='quiz-opt';
+      btn.textContent=opt;
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
+        if(i===item.a){
+          btn.classList.add('correct');
+          quizFeedback.textContent='✓ إجابة صحيحة!';
+          score++;
+        } else {
+          btn.classList.add('wrong');
+          quizOpts.children[item.a].classList.add('correct');
+          quizFeedback.textContent='✗ غير صحيح — الإجابة الصحيحة موضحة أعلاه.';
+        }
+        quizScore.textContent = `النقاط: ${score}`;
+        quizNext.classList.add('show');
+      });
+      quizOpts.appendChild(btn);
+    });
+  }
+
+  quizNext.addEventListener('click', ()=>{
+    qIndex++;
+    if(qIndex >= QUESTIONS.length){
+      quizBoxTop.style.display='none';
+      quizQ.style.display='none';
+      quizOpts.style.display='none';
+      quizFeedback.style.display='none';
+      quizNext.style.display='none';
+      quizDone.classList.add('show');
+      document.getElementById('quizFinalScore').textContent = `${score}/${QUESTIONS.length}`;
+    } else {
+      renderQuestion();
+    }
+  });
+
+  document.getElementById('quizRestart').addEventListener('click', ()=>{
+    qIndex=0; score=0;
+    quizBoxTop.style.display='';
+    quizQ.style.display='';
+    quizOpts.style.display='';
+    quizFeedback.style.display='';
+    quizDone.classList.remove('show');
+    renderQuestion();
+  });
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
